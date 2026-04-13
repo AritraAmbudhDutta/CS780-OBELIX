@@ -1,18 +1,4 @@
-"""
-train_rppo.py — Recurrent PPO trainer for OBELIX (Phase 3)
-
-Key features:
-  1) LSTM-based Actor-Critic for POMDP
-  2) Curriculum learning (spawn near box → far)
-  3) Dense reward shaping (sensor proximity, IR alignment, anti-circling)
-  4) Previous-action augmentation to break perceptual aliasing
-  5) Multi-difficulty training schedule
-  6) Entropy bonus for exploration
-
-Usage:
-  cd phase3_approaches/approach_a_rppo
-  python train_rppo.py --episodes 8000 --device auto
-"""
+"""Recurrent PPO trainer for OBELIX Phase 3."""
 
 import argparse, os, sys, time, random, math
 from collections import deque
@@ -33,7 +19,6 @@ INPUT_DIM = OBS_DIM * STACK_SIZE + ACTION_DIM  # 77
 HIDDEN_DIM = 128
 
 
-# ═══════════════ Model ═══════════════
 class RecurrentActorCritic(nn.Module):
     def __init__(self, input_dim=INPUT_DIM, hidden_dim=HIDDEN_DIM, action_dim=ACTION_DIM):
         super().__init__()
@@ -48,7 +33,6 @@ class RecurrentActorCritic(nn.Module):
         return self.actor(x), self.critic(x), hidden
 
 
-# ═══════════════ Helpers ═══════════════
 def build_stacked(frame_stack):
     frames = list(frame_stack)
     if len(frames) < STACK_SIZE:
@@ -57,22 +41,22 @@ def build_stacked(frame_stack):
 
 
 def curriculum_reset(env, progress):
-    """Reset env with curriculum: start near box early, far later."""
+    """Spawn bot closer to box early in training, fully random after 60%."""
     obs = env.reset()
     if progress > 0.6:
-        return obs  # Fully random after 60% of training
+        return obs
 
     box_x, box_y = env.box_center_x, env.box_center_y
     margin = env.bot_radius + 15
 
     if progress < 0.15:
-        dist = random.randint(20, 40)    # Very close (within IR range)
+        dist = random.randint(20, 40)
     elif progress < 0.30:
-        dist = random.randint(40, 90)    # Within near sensor range
+        dist = random.randint(40, 90)
     elif progress < 0.45:
-        dist = random.randint(80, 160)   # Within far sensor range
+        dist = random.randint(80, 160)
     else:
-        dist = random.randint(100, 250)  # Medium distance
+        dist = random.randint(100, 250)
 
     angle = random.uniform(0, 360)
     bx = int(box_x + dist * math.cos(math.radians(angle)))
@@ -91,35 +75,29 @@ def curriculum_reset(env, progress):
 
 
 def shape_reward(obs, prev_obs, action_idx, env_reward, action_hist):
-    """Dense reward shaping applied during training only."""
+    """Training-only reward shaping."""
     shaped = env_reward
     s = float(np.sum(obs[:17]))
     ps = float(np.sum(prev_obs[:17]))
 
-    # Proximity improvement reward (potential-based)
     shaped += 2.5 * (s - ps)
 
-    # IR alignment + forward bonus
     if obs[16] == 1 and action_idx == 2:
         shaped += 8.0
 
-    # Forward when any sensor active
     if s > 0 and action_idx == 2:
         shaped += 3.0
 
-    # Reduce harshness of all-zero penalty (env gives -18)
     if s == 0:
-        shaped += 12.0  # Net becomes ~ -6 instead of -18
+        shaped += 12.0
         if action_idx == 2:
-            shaped += 1.5  # Encourage forward during search
+            shaped += 1.5
 
-    # Anti-circling: penalize alternating turns
     if len(action_hist) >= 6:
         recent = list(action_hist)[-6:]
         if all(a != 2 for a in recent):
             shaped -= 4.0
 
-    # Strong anti-stuck (in addition to env's -200)
     if obs[17] == 1:
         shaped -= 30.0
 
@@ -127,23 +105,20 @@ def shape_reward(obs, prev_obs, action_idx, env_reward, action_hist):
 
 
 def get_difficulty_schedule(progress):
-    """Multi-difficulty curriculum for Phase 3 training."""
     if progress < 0.20:
-        return 0, False          # Static, no walls
+        return 0, False
     elif progress < 0.35:
-        return 0, True           # Static + walls
+        return 0, True
     elif progress < 0.50:
-        return 2, random.random() < 0.5   # Blinking, maybe walls
+        return 2, random.random() < 0.5
     elif progress < 0.65:
-        return 3, False          # Moving+blinking, no walls
+        return 3, False
     else:
-        # Mixed: random difficulty and walls
-        d = random.choice([0, 2, 3, 3, 3])  # Bias toward d=3
+        d = random.choice([0, 2, 3, 3, 3])
         w = random.random() < 0.5
         return d, w
 
 
-# ═══════════════ PPO Training ═══════════════
 def train(args):
     device = torch.device("cuda" if args.device != "cpu" and torch.cuda.is_available() else "cpu")
     print(f"Device: {device}")
@@ -174,7 +149,6 @@ def train(args):
     for ep in range(1, args.episodes + 1):
         progress = ep / args.episodes
 
-        # Difficulty schedule
         diff, walls = get_difficulty_schedule(progress)
         env.difficulty = diff
         env.box_blink_enabled = diff >= 2
@@ -183,7 +157,6 @@ def train(args):
 
         obs = curriculum_reset(env, progress)
 
-        # Episode collection
         frame_stack = deque(maxlen=STACK_SIZE)
         frame_stack.append(obs.astype(np.float32))
         prev_action = np.zeros(ACTION_DIM, dtype=np.float32)
@@ -231,12 +204,11 @@ def train(args):
             obs = next_obs
             ep_raw += env_reward
 
-        # ── Compute GAE ──
         T = len(rew_list)
         advantages = np.zeros(T, dtype=np.float32)
         returns = np.zeros(T, dtype=np.float32)
         gae = 0.0
-        last_val = 0.0  # Terminal
+        last_val = 0.0
 
         for t in reversed(range(T)):
             if t == T - 1:
@@ -248,14 +220,12 @@ def train(args):
             advantages[t] = gae
             returns[t] = gae + val_list[t]
 
-        # ── PPO Update ──
         obs_t = torch.as_tensor(np.array(obs_list), dtype=torch.float32, device=device)
         act_t = torch.as_tensor(act_list, dtype=torch.long, device=device)
         old_logp = torch.as_tensor(logp_list, dtype=torch.float32, device=device)
         adv_t = torch.as_tensor(advantages, dtype=torch.float32, device=device)
         ret_t = torch.as_tensor(returns, dtype=torch.float32, device=device)
 
-        # Normalize advantages
         adv_std = adv_t.std(unbiased=False)
         if torch.isfinite(adv_std) and adv_std > 1e-8:
             adv_t = (adv_t - adv_t.mean()) / (adv_std + 1e-8)
@@ -263,11 +233,10 @@ def train(args):
             adv_t = torch.zeros_like(adv_t)
 
         for _ in range(args.ppo_epochs):
-            # Process full sequence through LSTM
-            seq = obs_t.unsqueeze(0)  # (1, T, input_dim)
+            seq = obs_t.unsqueeze(0)
             logits_seq, val_seq, _ = model(seq)
-            logits_seq = logits_seq.squeeze(0)  # (T, 5)
-            val_seq = val_seq.squeeze(0).squeeze(-1)  # (T,)
+            logits_seq = logits_seq.squeeze(0)
+            val_seq = val_seq.squeeze(0).squeeze(-1)
 
             if not torch.isfinite(logits_seq).all() or not torch.isfinite(val_seq).all():
                 break
@@ -294,7 +263,6 @@ def train(args):
             nn.utils.clip_grad_norm_(model.parameters(), 0.5)
             optimizer.step()
 
-        # ── Logging ──
         all_rewards.append(ep_raw)
         avg50 = float(np.mean(all_rewards[-50:]))
 

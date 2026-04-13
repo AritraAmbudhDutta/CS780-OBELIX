@@ -1,17 +1,3 @@
-"""
-agent_rppo.py — OBELIX submission agent (Recurrent PPO with LSTM)
-
-Submit this file (renamed to agent.py) + weights.pth to Codabench.
-
-Architecture:
-  Linear(77→128) → ReLU → LSTM(128→128) →
-      Actor: Linear(128→5)   (used for action selection)
-      Critic: Linear(128→1)  (not used at inference)
-
-Input: 4-frame stack (18×4=72) + previous action one-hot (5) = 77
-Policy: greedy (argmax on actor logits).
-"""
-
 import os
 from collections import deque
 
@@ -25,7 +11,7 @@ OBS_DIM = 18
 ACTION_DIM = 5
 HIDDEN_DIM = 128
 STACK_SIZE = 4
-INPUT_DIM = OBS_DIM * STACK_SIZE + ACTION_DIM  # 77
+INPUT_DIM = OBS_DIM * STACK_SIZE + ACTION_DIM
 
 
 class RecurrentActorCritic(nn.Module):
@@ -39,12 +25,9 @@ class RecurrentActorCritic(nn.Module):
     def forward(self, x, hidden=None):
         x = F.relu(self.fc(x))
         x, hidden = self.lstm(x, hidden)
-        logits = self.actor(x)
-        value = self.critic(x)
-        return logits, value, hidden
+        return self.actor(x), self.critic(x), hidden
 
 
-# ── Global inference state ──────────────────────────────────────────
 _MODEL = None
 _HIDDEN = None
 _LAST_RNG_ID = None
@@ -59,7 +42,6 @@ def _load_once():
     wpath = os.path.join(os.path.dirname(os.path.abspath(__file__)), "weights.pth")
     model = RecurrentActorCritic()
     sd = torch.load(wpath, map_location="cpu")
-    # Handle both full checkpoint and raw state_dict
     if "actor_critic" in sd:
         model.load_state_dict(sd["actor_critic"])
     else:
@@ -81,7 +63,6 @@ def policy(obs: np.ndarray, rng: np.random.Generator) -> str:
 
     _load_once()
 
-    # Detect new episode
     rid = id(rng)
     if _LAST_RNG_ID is None or rid != _LAST_RNG_ID:
         _HIDDEN = None
