@@ -1,0 +1,50 @@
+\begin{thebibliography}{1}
+
+\bibitem{mahadevan1992automatic}
+S.~Mahadevan and J.~Connell, ``Automatic programming of behavior-based robots
+  using reinforcement learning,'' {\em Artificial Intelligence}, vol.~55,
+  no.~2-3, pp.~311--365, 1992.
+
+\bibitem{schulman2017proximal}
+J.~Schulman, F.~Wolski, P.~Dhariwal, A.~Radford, and O.~Klimov, ``Proximal
+  policy optimization algorithms,'' {\em arXiv preprint arXiv:1707.06347},
+  2017.
+
+\bibitem{wang2016dueling}
+Z.~Wang, T.~Schaul, M.~Hessel, H.~van Hasselt, M.~Lanctot, and N.~de~Freitas,
+  ``Dueling network architectures for deep reinforcement learning,'' {\em
+  Proceedings of the 33rd International Conference on Machine Learning},
+  pp.~1995--2003, 2016.
+
+\bibitem{van2016deep}
+H.~van Hasselt, A.~Guez, and D.~Silver, ``Deep reinforcement learning with
+  double q-learning,'' {\em Proceedings of the AAAI Conference on Artificial
+  Intelligence}, vol.~30, no.~1, 2016.
+
+\bibitem{schaul2015prioritized}
+T.~Schaul, J.~Quan, I.~Antonoglou, and D.~Silver, ``Prioritized experience
+  replay,'' {\em Proceedings of the International Conference on Learning
+  Representations (ICLR)}, 2016.
+
+\bibitem{haarnoja2018soft}
+T.~Haarnoja, A.~Zhou, P.~Abbeel, and S.~Levine, ``Soft actor-critic: Off-policy
+  maximum entropy deep reinforcement learning with a stochastic actor,'' {\em
+  Proceedings of the 35th International Conference on Machine Learning},
+  pp.~1861--1870, 2018.
+
+\bibitem{ng1999policy}
+A.~Y. Ng, D.~Harada, and S.~Russell, ``Policy invariance under reward
+  transformations: Theory and application to reward shaping,'' {\em Proceedings
+  of the 16th International Conference on Machine Learning}, pp.~278--287,
+  1999.
+
+\bibitem{sutton2018reinforcement}
+R.~S. Sutton and A.~G. Barto, {\em Reinforcement Learning: An Introduction}.
+\newblock MIT Press, 2nd~ed., 2018.
+
+\bibitem{hausknecht2015deep}
+M.~Hausknecht and P.~Stone, ``Deep recurrent q-learning for partially
+  observable {MDPs},'' {\em AAAI Fall Symposium on Sequential Decision Making
+  for Intelligent Agents}, 2015.
+
+\end{thebibliography}

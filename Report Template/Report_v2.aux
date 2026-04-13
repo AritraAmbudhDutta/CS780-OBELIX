@@ -1,0 +1,71 @@
+\relax 
+\providecommand\hyper@newdestlabel[2]{}
+\providecommand\HyField@AuxAddToFields[1]{}
+\providecommand\HyField@AuxAddToCoFields[2]{}
+\citation{mahadevan1992automatic}
+\@writefile{toc}{\contentsline {section}{\numberline {1}Competition Result}{1}{section.1}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Number of valid submissions per phase.}}{1}{table.caption.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {2}Introduction and Problem Description}{1}{section.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {3}Approach and Model Evolution}{2}{section.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Phase 1--2: Initial Exploration (Levels 1 and 2)}{2}{subsection.3.1}\protected@file@percent }
+\citation{schulman2017proximal}
+\citation{wang2016dueling,van2016deep,schaul2015prioritized}
+\citation{haarnoja2018soft}
+\citation{ng1999policy}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.1.1}Root Cause Analysis}{3}{subsubsection.3.1.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Phase 3: Structured Approaches (Level 3)}{3}{subsection.3.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Phase 4: Final Approaches (Test Phase)}{3}{subsection.3.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.4}Detailed Description of Best Models}{4}{subsection.3.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.4.1}Approach 1: Dueling D3QN + Heuristic (Best Score: $-1447.55$)}{4}{subsubsection.3.4.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.4.2}Approach 7: D3QN + PBRS (Best Score: $-1540.74$)}{4}{subsubsection.3.4.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4}Experiments and Implementation Details}{4}{section.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Training Setup}{4}{subsection.4.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Hyperparameter Summary}{5}{subsection.4.2}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Hyperparameter comparison across all major approaches. ``--'' indicates not applicable (on-policy method).}}{5}{table.caption.2}\protected@file@percent }
+\providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
+\newlabel{tab:hyperparams}{{2}{5}{Hyperparameter comparison across all major approaches. ``--'' indicates not applicable (on-policy method)}{table.caption.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Multi-Difficulty Training}{5}{subsection.4.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4}Local Evaluation}{5}{subsection.4.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {5}Results}{6}{section.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}Codabench Test Phase Results}{6}{subsection.5.1}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces Codabench test phase scores (sorted by score, higher is better). All scores are mean cumulative reward across 3 difficulty levels $\times $ 10 runs, with wall obstacles.}}{6}{table.caption.3}\protected@file@percent }
+\newlabel{tab:results}{{3}{6}{Codabench test phase scores (sorted by score, higher is better). All scores are mean cumulative reward across 3 difficulty levels $\times $ 10 runs, with wall obstacles}{table.caption.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.2}Training Curves (Approach 7 -- Refined D3QN with PBRS)}{7}{subsection.5.2}\protected@file@percent }
+\newlabel{fig:reward}{{1a}{7}{Smoothed training reward (EMA-50). Reward improves sharply after curriculum Phase 1, then stabilizes with high variance}{figure.caption.4}{}}
+\newlabel{sub@fig:reward}{{a}{7}{Smoothed training reward (EMA-50). Reward improves sharply after curriculum Phase 1, then stabilizes with high variance}{figure.caption.4}{}}
+\newlabel{fig:loss}{{1b}{7}{TD loss curve. Loss spikes during early episodes due to large reward magnitudes, then converges to a low stable value by episode 2000}{figure.caption.4}{}}
+\newlabel{sub@fig:loss}{{b}{7}{TD loss curve. Loss spikes during early episodes due to large reward magnitudes, then converges to a low stable value by episode 2000}{figure.caption.4}{}}
+\newlabel{fig:difficulty}{{1c}{7}{Per-difficulty learning curves. Static (Level 0) learns fastest; blinking and moving levels introduced later via curriculum show slower improvement}{figure.caption.4}{}}
+\newlabel{sub@fig:difficulty}{{c}{7}{Per-difficulty learning curves. Static (Level 0) learns fastest; blinking and moving levels introduced later via curriculum show slower improvement}{figure.caption.4}{}}
+\newlabel{fig:phases}{{1d}{7}{Reward distribution per curriculum phase. Variance decreases and median reward improves across phases, indicating progressive learning}{figure.caption.4}{}}
+\newlabel{sub@fig:phases}{{d}{7}{Reward distribution per curriculum phase. Variance decreases and median reward improves across phases, indicating progressive learning}{figure.caption.4}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Training diagnostics for Approach 7 (Refined D3QN with PBRS, 6000 episodes). All plots use true environment reward (not shaped reward).}}{7}{figure.caption.4}\protected@file@percent }
+\newlabel{fig:training}{{1}{7}{Training diagnostics for Approach 7 (Refined D3QN with PBRS, 6000 episodes). All plots use true environment reward (not shaped reward)}{figure.caption.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.3}Key Observations from Results}{7}{subsection.5.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.4}Learning Dynamics}{8}{subsection.5.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {6}Error Analysis and Discussion}{8}{section.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.1}Common Failure Modes}{8}{subsection.6.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.2}Why Simple Approaches Outperformed Complex Ones}{8}{subsection.6.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.3}Limitations and Future Improvements}{8}{subsection.6.3}\protected@file@percent }
+\citation{sutton2018reinforcement}
+\citation{mahadevan1992automatic}
+\citation{van2016deep}
+\citation{wang2016dueling}
+\citation{schulman2017proximal}
+\citation{schaul2015prioritized}
+\citation{ng1999policy}
+\citation{hausknecht2015deep}
+\@writefile{toc}{\contentsline {section}{\numberline {7}Conclusion}{9}{section.7}\protected@file@percent }
+\bibstyle{ieeetr}
+\bibdata{references}
+\bibcite{mahadevan1992automatic}{{1}{}{{}}{{}}}
+\bibcite{schulman2017proximal}{{2}{}{{}}{{}}}
+\bibcite{wang2016dueling}{{3}{}{{}}{{}}}
+\bibcite{van2016deep}{{4}{}{{}}{{}}}
+\bibcite{schaul2015prioritized}{{5}{}{{}}{{}}}
+\bibcite{haarnoja2018soft}{{6}{}{{}}{{}}}
+\bibcite{ng1999policy}{{7}{}{{}}{{}}}
+\bibcite{sutton2018reinforcement}{{8}{}{{}}{{}}}
+\bibcite{hausknecht2015deep}{{9}{}{{}}{{}}}
+\providecommand\NAT@force@numbers{}\NAT@force@numbers
+\gdef \@abspage@last{10}
