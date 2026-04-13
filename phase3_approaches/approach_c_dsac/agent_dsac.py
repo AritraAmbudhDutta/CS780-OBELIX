@@ -1,15 +1,3 @@
-"""
-agent_dsac.py — OBELIX submission agent (Discrete SAC + GRU)
-
-Submit this file (renamed to agent.py) + weights.pth to Codabench.
-
-Architecture (Policy Network):
-  Linear(77→128) → ReLU → GRU(128→128) → Linear(128→5)
-
-Input: 4-frame stack (18×4=72) + previous action one-hot (5) = 77
-Policy: greedy (argmax on policy logits; entropy only used in training).
-"""
-
 import os
 from collections import deque
 
@@ -23,7 +11,7 @@ OBS_DIM = 18
 ACTION_DIM = 5
 HIDDEN_DIM = 128
 STACK_SIZE = 4
-INPUT_DIM = OBS_DIM * STACK_SIZE + ACTION_DIM  # 77
+INPUT_DIM = OBS_DIM * STACK_SIZE + ACTION_DIM      
 
 
 class SACPolicyNet(nn.Module):
@@ -40,7 +28,7 @@ class SACPolicyNet(nn.Module):
         return logits, hidden
 
 
-# ── Global inference state ──────────────────────────────────────────
+                                                                      
 _MODEL = None
 _HIDDEN = None
 _LAST_RNG_ID = None

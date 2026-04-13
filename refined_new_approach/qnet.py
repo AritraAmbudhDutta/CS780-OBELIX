@@ -14,9 +14,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-# ---------------------------------------------------------------------------
-# Baseline Q-Network  (small MLP, 3 layers)
-# ---------------------------------------------------------------------------
+                                                                             
+                                           
+                                                                             
 
 class BasicQNet(nn.Module):
     """
@@ -39,9 +39,9 @@ class BasicQNet(nn.Module):
         return self.layer3(x)
 
 
-# ---------------------------------------------------------------------------
-# Parametric-Noise Linear Layer  (Fortunato et al. 2017 — "Noisy Networks")
-# ---------------------------------------------------------------------------
+                                                                             
+                                                                           
+                                                                             
 
 class ParametricNoiseLinear(nn.Module):
     """
@@ -70,13 +70,13 @@ class ParametricNoiseLinear(nn.Module):
         self.fan_out = fan_out
         self._init_sigma = initial_sigma
 
-        # Learnable tensors
+                           
         self.weight_mu    = nn.Parameter(torch.empty(fan_out, fan_in))
         self.weight_sigma = nn.Parameter(torch.empty(fan_out, fan_in))
         self.bias_mu      = nn.Parameter(torch.empty(fan_out))
         self.bias_sigma   = nn.Parameter(torch.empty(fan_out))
 
-        # Non-learnable noise buffers (kept on same device as params)
+                                                                     
         self.register_buffer("noise_weight", torch.zeros(fan_out, fan_in))
         self.register_buffer("noise_bias",   torch.zeros(fan_out))
 
@@ -109,15 +109,15 @@ class ParametricNoiseLinear(nn.Module):
             W = self.weight_mu + self.weight_sigma * self.noise_weight
             b = self.bias_mu   + self.bias_sigma   * self.noise_bias
         else:
-            # Inference: disable noise, use learned mean only
+                                                             
             W = self.weight_mu
             b = self.bias_mu
         return F.linear(x, W, b)
 
 
-# ---------------------------------------------------------------------------
-# Dueling Q-Network  (standard linear, no noise)
-# ---------------------------------------------------------------------------
+                                                                             
+                                                
+                                                                             
 
 class DualStreamQNet(nn.Module):
     """
@@ -171,9 +171,9 @@ class DualStreamQNet(nn.Module):
         pass
 
 
-# ---------------------------------------------------------------------------
-# Noisy Dueling Q-Network  (ParametricNoiseLinear + Dueling heads)
-# ---------------------------------------------------------------------------
+                                                                             
+                                                                  
+                                                                             
 
 class NoisyDualStreamQNet(nn.Module):
     """
@@ -204,7 +204,7 @@ class NoisyDualStreamQNet(nn.Module):
         super().__init__()
         h1, h2 = layer_sizes
 
-        # Deterministic feature extractor
+                                         
         self.shared_encoder = nn.Sequential(
             nn.Linear(sensor_dim, h1),
             nn.ReLU(),
@@ -212,11 +212,11 @@ class NoisyDualStreamQNet(nn.Module):
             nn.ReLU(),
         )
 
-        # Noisy value head
+                          
         self.value_hidden = ParametricNoiseLinear(h2, h2 // 2)
         self.value_out    = ParametricNoiseLinear(h2 // 2, 1)
 
-        # Noisy advantage head
+                              
         self.advantage_hidden = ParametricNoiseLinear(h2, h2 // 2)
         self.advantage_out    = ParametricNoiseLinear(h2 // 2, num_actions)
 
@@ -239,9 +239,9 @@ class NoisyDualStreamQNet(nn.Module):
         self.advantage_out.resample_noise()
 
 
-# ---------------------------------------------------------------------------
-# Factory helper
-# ---------------------------------------------------------------------------
+                                                                             
+                
+                                                                             
 
 def build_q_network(sensor_dim: int, num_actions: int) -> BasicQNet:
     """Convenience constructor — returns a BasicQNet."""

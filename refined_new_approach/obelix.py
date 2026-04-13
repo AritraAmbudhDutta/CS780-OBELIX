@@ -21,7 +21,7 @@ class OBELIX:
         self.arena_size = arena_size
         self.frame_size = (arena_size, arena_size, 3)
         self.frame = np.ones(self.frame_size, np.uint8) * 0
-        self.bot_radius = int(scaling_factor * 12 / 2)  # 12" diameter
+        self.bot_radius = int(scaling_factor * 12 / 2)                
         self.facing_angle = 0
 
         self.bot_center_x = 200
@@ -53,10 +53,10 @@ class OBELIX:
         self.wall_obstacles = wall_obstacles
         self.obstacles: List[Tuple[Tuple[int, int], Tuple[int, int]]] = []
 
-        # Difficulty knobs (kept simple and reproducible).
-        # 0: static box
-        # 2+: blinking box
-        # 3+: moving box (random trajectory)
+                                                          
+                       
+                          
+                                            
         self.difficulty = difficulty
         self.box_speed = int(box_speed)
         self.box_blink_enabled = difficulty >= 2
@@ -70,7 +70,7 @@ class OBELIX:
         self._box_vx = 0
         self._box_vy = 0
 
-        # Success = attach to box, then move box into a corner goal region.
+                                                                           
         self.goal_margin = 20 * scaling_factor
         self.success_bonus = 2000
 
@@ -83,7 +83,7 @@ class OBELIX:
         self.box_corners = []
         self.box_frame = np.zeros(self.frame_size, np.uint8)
 
-        # Negative object kept for compatibility; not used in scoring by default.
+                                                                                 
         self.neg_circle_frame = np.zeros(self.frame_size, np.uint8)
         self.neg_circle_center_x = 0
         self.neg_circle_center_y = 0
@@ -109,12 +109,12 @@ class OBELIX:
         self.stuck_flag = 0
         self.sensor_feedback[:] = 0
 
-        # Build obstacles first so we can avoid spawning inside/too-close to walls.
+                                                                                   
         self._build_obstacles()
 
         def circle_intersects_rect(cx: int, cy: int, radius: int, rect) -> bool:
             (x1, y1), (x2, y2) = rect
-            # Normalize.
+                        
             if x1 > x2:
                 x1, x2 = x2, x1
             if y1 > y2:
@@ -133,7 +133,7 @@ class OBELIX:
                     return False
             return True
 
-        # Clearance so the bot doesn't spawn "touching" a wall and immediately get stuck.
+                                                                                         
         start_clearance = max(1, int(self.forward_step_unit) + 1)
 
         bot_bounds_margin = 10 + self.bot_radius + start_clearance
@@ -143,14 +143,14 @@ class OBELIX:
         max_attempts = 5000
         attempts = 0
 
-        # Sample bot position.
+                              
         while True:
             attempts += 1
             if attempts > max_attempts:
                 raise RuntimeError("Failed to sample a valid initial bot position")
             bx = int(self.rng.integers(bot_bounds_margin, self.frame_size[1] - bot_bounds_margin))
             by = int(self.rng.integers(bot_bounds_margin, self.frame_size[0] - bot_bounds_margin))
-            # Use inflated radius for clearance from obstacles.
+                                                               
             if clear_of_obstacles(bx, by, self.bot_radius + start_clearance):
                 self.bot_center_x = bx
                 self.bot_center_y = by
@@ -158,7 +158,7 @@ class OBELIX:
 
         self.facing_angle = int(self.rng.integers(0, 360))
 
-        # Sample box position (avoid obstacles and avoid spawning already attached).
+                                                                                    
         while True:
             attempts += 1
             if attempts > max_attempts:
@@ -194,7 +194,7 @@ class OBELIX:
         return self.sensor_feedback.copy()
 
     def _reset_box_dynamics(self) -> None:
-        # Initialize blink schedule.
+                                    
         if self.box_blink_enabled:
             self.box_visible = True
             self._blink_countdown = int(
@@ -204,7 +204,7 @@ class OBELIX:
             self.box_visible = True
             self._blink_countdown = 0
 
-        # Initialize moving trajectory.
+                                       
         if self.box_move_enabled:
             directions = [
                 (-1, -1),
@@ -224,12 +224,12 @@ class OBELIX:
             self._box_vy = 0
 
     def _update_box_dynamics(self) -> None:
-        # Once attached, the box is always present and moves with the robot.
+                                                                            
         if self.enable_push:
             self.box_visible = True
             return
 
-        # Blinking / appearing-disappearing.
+                                            
         if self.box_blink_enabled:
             self._blink_countdown -= 1
             if self._blink_countdown <= 0:
@@ -240,9 +240,9 @@ class OBELIX:
                     lo, hi = self._blink_off_range
                 self._blink_countdown = int(self.rng.integers(lo, hi + 1))
 
-        # Random trajectory.
+                            
         if self.box_move_enabled:
-            # Small probability of changing direction to make it less predictable.
+                                                                                  
             if float(self.rng.random()) < 0.05:
                 self._reset_box_dynamics()
 
@@ -256,22 +256,22 @@ class OBELIX:
             max_y = self.frame_size[0] - 10 - half
 
             bounced = False
-            # If it would go out of bounds, clip to boundary (episode will terminate on boundary touch).
+                                                                                                        
             if not (min_x <= next_x <= max_x):
                 bounced = True
             if not (min_y <= next_y <= max_y):
                 bounced = True
 
-            # Obstacle interaction: treat the box as a circle and bounce off walls.
+                                                                                   
             if self.wall_obstacles and not bounced:
                 for p1, p2 in self.obstacles:
                     x1, y1 = p1
                     x2, y2 = p2
-                    # Expand rectangle by half-size.
+                                                    
                     x1e, x2e = x1 - half, x2 + half
                     y1e, y2e = y1 - half, y2 + half
                     if (x1e <= next_x <= x2e) and (y1e <= next_y <= y2e):
-                        # Simple bounce: reverse the dominant component.
+                                                                        
                         if abs(self._box_vx) >= abs(self._box_vy):
                             self._box_vx = -self._box_vx
                         else:
@@ -287,18 +287,18 @@ class OBELIX:
         if not self.wall_obstacles:
             return
 
-        # One static wall with a gap; obstacles are indistinguishable from the box (same intensity).
+                                                                                                    
         wall_thickness = max(6, int(4 * self.scaling_factor))
         x_center = self.frame_size[1] // 2
         x1 = x_center - wall_thickness // 2
         x2 = x_center + wall_thickness // 2
 
-        # Keep a guaranteed passage: bot circle + attached box clearance.
-        # This avoids configurations where the wall blocks the arena.
+                                                                         
+                                                                     
         min_gap = 2 * (self.bot_radius + max(1, self.box_size // 2)) + max(
             10, self.forward_step_unit * 2
         )
-        # If the arena is too small, skip obstacles rather than trapping the agent.
+                                                                                   
         if min_gap >= (self.frame_size[0] - 40):
             self.obstacles = []
             return
@@ -333,7 +333,7 @@ class OBELIX:
         right = x + half
         bottom = y - half
         top = y + half
-        # Boundary is the inner rectangle drawn at offset=10.
+                                                             
         return (
             left <= 10
             or right >= (self.frame_size[1] - 10)
@@ -357,7 +357,7 @@ class OBELIX:
         )
 
     def _update_frames(self, show: bool) -> None:
-        # Always build masks/frames so observation is correct in headless mode.
+                                                                               
         self.frame = np.ones(self.frame_size, np.uint8) * 0
         self.bot_mask = np.ones(self.frame_size, np.uint8) * 0
         cv2.rectangle(
@@ -414,9 +414,9 @@ class OBELIX:
             (100, 100, 100),
             -1,
         )
-        # self.bot_mask = cv2.flip(self.bot_mask, 0)
-        # cv2.imshow("bot_mask", self.bot_mask)
-        # cv2.imshow("box_frame", self.box_frame)
+                                                    
+                                               
+                                                 
 
         for sonar_range, sonar_intensity in zip(
             [self.sonar_far_range, self.sonar_near_range, self.sonar_range_offset],
@@ -501,16 +501,16 @@ class OBELIX:
         self.frame = cv2.addWeighted(self.frame, 1.0, self.neg_circle_frame, 1.0, 0)
         self.frame = cv2.flip(self.frame, 0)
 
-        # feedback_image = np.asarray(self.sensor_feedback * 255, np.uint8).reshape(self.sensor_feedback.shape[0], 1).T
-        # feedback_image = cv2.resize(feedback_image, (frame.shape[1], 20), cv2.INTER_NEAREST)
-        # cv2.imshow("feedback_sensor_image", feedback_image)
+                                                                                                                       
+                                                                                              
+                                                             
         if show:
             cv2.imshow(
                 "Experiment Environment (Behaviour 1: Finding a Box)", self.frame
             )
             cv2.waitKey(1)
-        # for i in range(9):
-        #     cv2.imshow("mask" + str(i), cv2.flip(self.sensor_feedback_masks[i], 0))
+                            
+                                                                                     
 
     def render_frame(self):
         self._update_frames(show=True)
@@ -593,8 +593,8 @@ class OBELIX:
 
         self.current_step += 1
 
-        # Update target dynamics first (blinking/moving). If the box is attached,
-        # this is a no-op and the box will move with the robot in the push logic below.
+                                                                                 
+                                                                                       
         self._update_box_dynamics()
 
         angle_change = self.move_options[move]
@@ -618,7 +618,7 @@ class OBELIX:
                 + self.forward_step_unit * np.sin(np.deg2rad(self.facing_angle))
             )
             if self.enable_push:
-                # Allow box to reach the boundary (episode terminates when it touches).
+                                                                                       
                 half = max(1, self.box_size // 2)
                 min_x = 10 + half
                 max_x = self.frame_size[1] - 10 - half
@@ -647,7 +647,7 @@ class OBELIX:
                     self.stuck_flag = 0
                     self.active_state = "P"
                 else:
-                    # Bump into boundary/wall: do not terminate, just stay in place.
+                                                                                    
                     self.stuck_flag = 1
                     self.active_state = "U"
 
@@ -680,13 +680,13 @@ class OBELIX:
         return self.sensor_feedback, self.reward, self.done
 
     def check_done_state(self):
-        # cv2.imshow("added_bot_box", self.bot_mask[:, :, 0] + self.box_frame[:, :, 0])
+                                                                                       
         if self.enable_push:
-            self.reward -= 1  # Small step reward for pushing the box (encourages shorter trajectories).
+            self.reward -= 1                                                                            
         elif (self.box_visible or self.enable_push) and np.any(
             (self.bot_mask[:, :, 0] + self.box_frame[:, :, 0]) == 200
         ):
-            # self.done = True
+                              
             self.reward += 100
             y = (
                 np.argmax((self.bot_mask[:, :, 0] + self.box_frame[:, :, 0]))
@@ -696,19 +696,19 @@ class OBELIX:
                 np.argmax((self.bot_mask[:, :, 0] + self.box_frame[:, :, 0]))
                 % self.frame_size
             )[0]
-            # cv2.circle(self.frame, (x, int(self.frame_size[0]-y)), self.bot_radius//10, (250, 250, 250), -1)
-            # cv2.imshow("asdf", self.frame)
+                                                                                                              
+                                            
             self.enable_push = True
             self.box_visible = True
             self.active_state = "P"
 
-            # print("************done*********************")
+                                                            
         elif np.any((self.bot_mask[:, :, 0] + self.neg_circle_frame[:, :, 0]) == 200):
             self.done = True
             self.reward += -100
             print("************Negative done*********************")
 
-        # Episode ends when the attached box touches the boundary.
+                                                                  
         if (
             (not self.done)
             and self.enable_push
@@ -717,9 +717,9 @@ class OBELIX:
             self.done = True
             self.reward += self.success_bonus
 
-        # if self.bot_center_x == self.box_center_x and self.bot_center_y==self.bot_center_y:
-        #     self.done = True
-        #     self.reward = 100
+                                                                                             
+                              
+                               
 
     def update_reward(self):
         left_sensor_reward = np.sum(self.sensor_feedback[:4] * 1)

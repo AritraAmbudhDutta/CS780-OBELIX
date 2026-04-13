@@ -82,14 +82,14 @@ def main():
 
     policy_fn = load_policy(agent_path)
 
-    # ── WITH walls (Codabench setting) ──
+                                          
     print(f"\n{'='*60}")
     print("  Codabench-Identical: wall_obstacles=True, all difficulties")
     print(f"{'='*60}")
 
     res_wall = evaluate_like_codabench(policy_fn, runs=args.runs, base_seed=args.seed,
                                         wall_obstacles=True)
-    cum_wall = res_wall["overall_mean"] * args.runs * 3  # cumulative over all runs
+    cum_wall = res_wall["overall_mean"] * args.runs * 3                            
 
     print(f"\n  Difficulty 0 (static):           mean={res_wall['d0_mean']:+.1f}  std={res_wall['d0_std']:.1f}")
     print(f"  Difficulty 2 (blinking):         mean={res_wall['d2_mean']:+.1f}  std={res_wall['d2_std']:.1f}")
@@ -97,10 +97,10 @@ def main():
     print(f"  Overall (with walls):            mean={res_wall['overall_mean']:+.1f}  std={res_wall['overall_std']:.1f}")
     print(f"  Cumulative (with walls, {args.runs*3} runs): {cum_wall:+.1f}")
 
-    # Reload agent to reset state
+                                 
     policy_fn = load_policy(agent_path)
 
-    # ── WITHOUT walls ──
+                         
     print(f"\n{'='*60}")
     print("  Comparison: wall_obstacles=False, all difficulties")
     print(f"{'='*60}")
@@ -115,7 +115,7 @@ def main():
     print(f"  Overall (no walls):              mean={res_nowall['overall_mean']:+.1f}  std={res_nowall['overall_std']:.1f}")
     print(f"  Cumulative (no walls, {args.runs*3} runs):  {cum_nowall:+.1f}")
 
-    # ── Summary ──
+                   
     print(f"\n{'='*60}")
     print(f"  CODABENCH SUBMISSION ESTIMATE")
     print(f"{'='*60}")

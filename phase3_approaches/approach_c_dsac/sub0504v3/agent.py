@@ -23,7 +23,7 @@ OBS_DIM = 18
 ACTION_DIM = 5
 HIDDEN_DIM = 128
 STACK_SIZE = 4
-INPUT_DIM = OBS_DIM * STACK_SIZE + ACTION_DIM  # 77
+INPUT_DIM = OBS_DIM * STACK_SIZE + ACTION_DIM      
 
 
 class SACPolicyNet(nn.Module):
@@ -40,7 +40,7 @@ class SACPolicyNet(nn.Module):
         return logits, hidden
 
 
-# ── Global inference state ──────────────────────────────────────────
+                                                                      
 _MODEL = None
 _HIDDEN = None
 _LAST_RNG_ID = None

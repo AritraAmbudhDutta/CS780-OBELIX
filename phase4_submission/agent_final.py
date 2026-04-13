@@ -21,7 +21,7 @@ ACTIONS = ("L45", "L22", "FW", "R22", "R45")
 OBS_DIM = 18
 ACTION_DIM = 5
 STACK_SIZE = 4
-INPUT_DIM = OBS_DIM * STACK_SIZE + ACTION_DIM  # 77
+INPUT_DIM = OBS_DIM * STACK_SIZE + ACTION_DIM      
 
 
 class QNet(nn.Module):
@@ -35,16 +35,16 @@ class QNet(nn.Module):
         return self.fc3(F.relu(self.fc2(F.relu(self.fc1(x)))))
 
 
-# ── Global state ────────────────────────────────────────
+                                                          
 _MODEL = None
 _LAST_RNG_ID = None
 _FRAME_STACK = deque(maxlen=STACK_SIZE)
 _PREV_ACTION = np.zeros(ACTION_DIM, dtype=np.float32)
 _STEP = 0
-_ZERO_RUN = 0          # Consecutive steps with all sensors=0
-_FW_COUNT = 0           # Forward steps in current search segment
-_TURN_DIR = 1           # 1=right, -1=left for alternating search
-_STUCK_ESCAPE = 0       # Counter for escape sequence after stuck
+_ZERO_RUN = 0                                                
+_FW_COUNT = 0                                                    
+_TURN_DIR = 1                                                    
+_STUCK_ESCAPE = 0                                                
 
 
 def _load_once():
@@ -74,50 +74,50 @@ def _heuristic_search():
     """Biased forward walk with periodic turns (lawnmower search)."""
     global _FW_COUNT, _TURN_DIR
 
-    # Go forward for a segment, then turn
-    segment_len = 15  # Steps before turning
+                                         
+    segment_len = 15                        
     if _FW_COUNT < segment_len:
         _FW_COUNT += 1
         return "FW"
     elif _FW_COUNT < segment_len + 2:
-        # Two 45° turns = 90° turn
+                                  
         _FW_COUNT += 1
         return "R45" if _TURN_DIR > 0 else "L45"
     else:
         _FW_COUNT = 0
-        _TURN_DIR *= -1  # Alternate direction
+        _TURN_DIR *= -1                       
         return "FW"
 
 
 def _heuristic_with_sensors(obs):
     """Reactive heuristic when sensors detect the box."""
-    # IR sensor (bit 16) → box directly ahead → move forward
+                                                            
     if obs[16] == 1:
         return "FW"
 
-    # Forward near sensors (bits 5,7,9,11) → close and ahead
+                                                            
     fwd_near = obs[5] + obs[7] + obs[9] + obs[11]
     if fwd_near > 0:
         return "FW"
 
-    # Forward far sensors (bits 4,6,8,10) → far but ahead
+                                                         
     fwd_far = obs[4] + obs[6] + obs[8] + obs[10]
     if fwd_far > 0:
         return "FW"
 
-    # Left sensors (bits 0-3)
+                             
     left_sum = obs[0] + obs[1] + obs[2] + obs[3]
-    # Right sensors (bits 12-15)
+                                
     right_sum = obs[12] + obs[13] + obs[14] + obs[15]
 
     if left_sum > 0 and right_sum == 0:
-        return "L22" if obs[2] or obs[3] else "L45"  # Near-front → small turn
+        return "L22" if obs[2] or obs[3] else "L45"                           
     if right_sum > 0 and left_sum == 0:
         return "R22" if obs[12] or obs[13] else "R45"
     if left_sum > 0 and right_sum > 0:
-        return "FW"  # Both sides → probably ahead
+        return "FW"                               
 
-    return None  # Shouldn't reach here if sensors > 0
+    return None                                       
 
 
 def policy(obs: np.ndarray, rng: np.random.Generator) -> str:
@@ -126,7 +126,7 @@ def policy(obs: np.ndarray, rng: np.random.Generator) -> str:
 
     _load_once()
 
-    # Detect new episode
+                        
     rid = id(rng)
     if _LAST_RNG_ID is None or rid != _LAST_RNG_ID:
         _FRAME_STACK.clear()
@@ -141,9 +141,9 @@ def policy(obs: np.ndarray, rng: np.random.Generator) -> str:
     _STEP += 1
     sensor_sum = float(np.sum(obs[:17]))
 
-    # ── STUCK ESCAPE: deterministic 90° turn + forward ──
+                                                          
     if obs[17] == 1:
-        _STUCK_ESCAPE = 4  # 2 turns + 2 forwards
+        _STUCK_ESCAPE = 4                        
         _FW_COUNT = 0
 
     if _STUCK_ESCAPE > 0:
@@ -155,7 +155,7 @@ def policy(obs: np.ndarray, rng: np.random.Generator) -> str:
         _set_prev(act)
         return act
 
-    # ── NO SENSORS: heuristic search ──
+                                        
     if sensor_sum == 0:
         _ZERO_RUN += 1
         if _ZERO_RUN >= 2:
@@ -165,11 +165,11 @@ def policy(obs: np.ndarray, rng: np.random.Generator) -> str:
     else:
         _ZERO_RUN = 0
 
-    # ── SENSORS ACTIVE: try heuristic first, NN as backup ──
+                                                             
     if sensor_sum > 0:
         h_act = _heuristic_with_sensors(obs)
         if h_act is not None:
-            # Consult NN — use NN only if it strongly disagrees
+                                                               
             _FRAME_STACK.append(obs.astype(np.float32))
             stacked = _build_stacked(_FRAME_STACK)
             augmented = np.concatenate([stacked, _PREV_ACTION])
@@ -180,7 +180,7 @@ def policy(obs: np.ndarray, rng: np.random.Generator) -> str:
                 nn_q = float(q[0, nn_idx])
                 h_q = float(q[0, ACTIONS.index(h_act)])
 
-            # Use NN if it's significantly more confident
+                                                         
             if nn_q > h_q + 5.0:
                 act = ACTIONS[nn_idx]
             else:
@@ -188,7 +188,7 @@ def policy(obs: np.ndarray, rng: np.random.Generator) -> str:
             _set_prev(act)
             return act
 
-    # ── FALLBACK: NN alone ──
+                              
     _FRAME_STACK.append(obs.astype(np.float32))
     stacked = _build_stacked(_FRAME_STACK)
     augmented = np.concatenate([stacked, _PREV_ACTION])

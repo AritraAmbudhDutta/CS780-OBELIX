@@ -15,24 +15,24 @@ import numpy as np
 import os
 from collections import deque
 
-# ---- Internal singletons (loaded once per process) ----
-_NET         = None   # loaded network
-_TH          = None   # torch module reference
-_HISTORY     = None   # FrameBuffer instance
-_LAST_RAW    = None   # previous raw observation (for episode-boundary detection)
-_NET_KIND    = None   # "ddqn" or "ppo"
+                                                         
+_NET         = None                   
+_TH          = None                           
+_HISTORY     = None                         
+_LAST_RAW    = None                                                              
+_NET_KIND    = None                    
 
 ACTIONS = ("L45", "L22", "FW", "R22", "R45")
 
-# ---- Hyper-parameters (must match training) ----
+                                                  
 STACK_SIZE    = 6
 SINGLE_OBS_DIM = 18
-FULL_OBS_DIM  = STACK_SIZE * SINGLE_OBS_DIM   # 108
+FULL_OBS_DIM  = STACK_SIZE * SINGLE_OBS_DIM        
 
 
-# ===========================================================================
-# Rolling observation buffer
-# ===========================================================================
+                                                                             
+                            
+                                                                             
 
 class _RollingBuffer:
     """Maintains the last STACK_SIZE observations as a flat concatenated vector."""
@@ -57,9 +57,9 @@ class _RollingBuffer:
         return np.concatenate(list(self._window))
 
 
-# ===========================================================================
-# Episode boundary detector
-# ===========================================================================
+                                                                             
+                           
+                                                                             
 
 def _is_new_episode(prev_obs, curr_obs) -> bool:
     """Heuristic: if ≥10 sensor bits changed, assume a new episode started."""
@@ -70,9 +70,9 @@ def _is_new_episode(prev_obs, curr_obs) -> bool:
     return int(np.sum(a != b)) >= 10
 
 
-# ===========================================================================
-# Inline network definitions (no external imports needed in submission)
-# ===========================================================================
+                                                                             
+                                                                       
+                                                                             
 
 class _DualStreamNet:
     """
@@ -145,26 +145,26 @@ class _PolicyValueNet:
                 )
 
             def forward(self, x):
-                return self.actor(self.backbone(x))   # only logits needed
+                return self.actor(self.backbone(x))                       
 
         return _Net()
 
 
-# ===========================================================================
-# Safe fallback: forward-biased random walk
-# ===========================================================================
+                                                                             
+                                           
+                                                                             
 
 def _fallback(obs, rng: np.random.Generator) -> str:
     """Used when weights cannot be loaded."""
     stuck = len(obs) > 17 and obs[17] == 1
-    probs = np.array([0.25, 0.25, 0.00, 0.25, 0.25]) if stuck \
+    probs = np.array([0.25, 0.25, 0.00, 0.25, 0.25]) if stuck\
         else np.array([0.05, 0.10, 0.70, 0.10, 0.05])
     return ACTIONS[int(rng.choice(len(ACTIONS), p=probs))]
 
 
-# ===========================================================================
-# One-time model loader
-# ===========================================================================
+                                                                             
+                       
+                                                                             
 
 def _load_once() -> None:
     global _NET, _TH, _HISTORY, _NET_KIND
@@ -185,13 +185,13 @@ def _load_once() -> None:
         ckpt = torch.load(weights_path, map_location="cpu", weights_only=True)
 
         if isinstance(ckpt, dict) and "network" in ckpt:
-            # PPO checkpoint format: {"network": state_dict, ...}
+                                                                 
             _NET_KIND = "ppo"
             _NET = _PolicyValueNet(obs_dim=FULL_OBS_DIM, num_actions=5, hidden=256)
             _NET.load_state_dict(ckpt["network"])
             print("[agent] Loaded PPO weights")
         else:
-            # D3QN checkpoint format: {"model_state_dict": ...} or raw state_dict
+                                                                                 
             _NET_KIND = "ddqn"
             _NET = _DualStreamNet(obs_dim=FULL_OBS_DIM, num_actions=5, layer_sizes=(256, 128))
             sd  = ckpt["model_state_dict"] if (isinstance(ckpt, dict) and "model_state_dict" in ckpt) else ckpt
@@ -205,9 +205,9 @@ def _load_once() -> None:
         print(f"[agent] Weight load failed: {err}")
 
 
-# ===========================================================================
-# Public policy function (called by Codabench)
-# ===========================================================================
+                                                                             
+                                              
+                                                                             
 
 def policy(obs, rng=None) -> str:
     """
@@ -230,7 +230,7 @@ def policy(obs, rng=None) -> str:
     if _NET is None or _TH is None or _HISTORY is None:
         return _fallback(obs, rng)
 
-    # Detect episode boundaries (large state change → reset buffer)
+                                                                   
     if _is_new_episode(_LAST_RAW, obs):
         stacked = _HISTORY.reset(obs)
     else:

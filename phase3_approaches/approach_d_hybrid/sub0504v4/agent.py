@@ -27,7 +27,7 @@ OBS_DIM = 18
 ACTION_DIM = 5
 HIDDEN_DIM = 64
 STACK_SIZE = 4
-INPUT_DIM = OBS_DIM * STACK_SIZE + ACTION_DIM  # 77
+INPUT_DIM = OBS_DIM * STACK_SIZE + ACTION_DIM      
 
 
 class SimpleQNet(nn.Module):
@@ -43,14 +43,14 @@ class SimpleQNet(nn.Module):
         return self.fc3(x)
 
 
-# ── Global inference state ──────────────────────────────────────────
+                                                                      
 _MODEL = None
 _LAST_RNG_ID = None
 _FRAME_STACK = deque(maxlen=STACK_SIZE)
 _PREV_ACTION = np.zeros(ACTION_DIM, dtype=np.float32)
 _STEP = 0
 _FW_COUNT = 0
-_TURN_DIR = 1  # 1=right, -1=left
+_TURN_DIR = 1                    
 
 
 def _load_once():
@@ -80,50 +80,50 @@ def _heuristic_search(obs, rng):
     """Biased random walk / lawnmower pattern when no sensors active."""
     global _FW_COUNT, _TURN_DIR
 
-    # If stuck, turn away
+                         
     if obs[17] == 1:
         _FW_COUNT = 0
         _TURN_DIR *= -1
         return "L45" if _TURN_DIR < 0 else "R45"
 
-    # Lawnmower pattern: go forward for N steps, then turn
-    segment = 15 + (_STEP // 200) * 5  # Increasing segment length
+                                                          
+    segment = 15 + (_STEP // 200) * 5                             
     if _FW_COUNT < segment:
         _FW_COUNT += 1
         return "FW"
     else:
         _FW_COUNT = 0
-        _TURN_DIR *= -1  # Alternate turn direction
+        _TURN_DIR *= -1                            
         return "R45" if _TURN_DIR > 0 else "L45"
 
 
 def _heuristic_with_sensors(obs):
     """Quick reactive heuristic when sensors detect the box."""
-    # IR sensor active → go forward (aligned with box)
+                                                      
     if obs[16] == 1:
         return "FW"
 
-    # Forward near sensors active → go forward
-    if any(obs[5:12:2]):  # near bits of forward sensors
+                                              
+    if any(obs[5:12:2]):                                
         return "FW"
 
-    # Forward far sensors active → go forward
-    if any(obs[4:12:2]):  # far bits of forward sensors
+                                             
+    if any(obs[4:12:2]):                               
         return "FW"
 
-    # Left sensors active → turn left
+                                     
     if any(obs[0:4]):
-        if obs[2] or obs[3]:  # near-left-front
+        if obs[2] or obs[3]:                   
             return "L22"
         return "L45"
 
-    # Right sensors active → turn right
+                                       
     if any(obs[12:16]):
-        if obs[12] or obs[13]:  # near-right-front
+        if obs[12] or obs[13]:                    
             return "R22"
         return "R45"
 
-    return None  # No clear heuristic → use NN
+    return None                               
 
 
 def policy(obs: np.ndarray, rng: np.random.Generator) -> str:
@@ -143,22 +143,22 @@ def policy(obs: np.ndarray, rng: np.random.Generator) -> str:
     _STEP += 1
     sensor_sum = float(np.sum(obs[:17]))
 
-    # ── Stuck escape ──
+                        
     if obs[17] == 1:
         act = "L45" if rng.random() < 0.5 else "R45"
         _update_prev(act)
         return act
 
-    # ── No sensors → heuristic search ──
+                                         
     if sensor_sum == 0:
         act = _heuristic_search(obs, rng)
         _update_prev(act)
         return act
 
-    # ── Sensors active → try heuristic first, then NN ──
+                                                         
     h_act = _heuristic_with_sensors(obs)
     if h_act is not None:
-        # Use NN to potentially override heuristic (blend)
+                                                          
         _FRAME_STACK.append(obs.astype(np.float32))
         stacked = _build_stacked(_FRAME_STACK)
         augmented = np.concatenate([stacked, _PREV_ACTION])
@@ -169,7 +169,7 @@ def policy(obs: np.ndarray, rng: np.random.Generator) -> str:
             nn_q_max = float(q.max())
             nn_q_heuristic = float(q[0, ACTIONS.index(h_act)])
 
-        # If NN is confident and disagrees with heuristic, use NN
+                                                                 
         if nn_q_max > nn_q_heuristic + 2.0:
             act = ACTIONS[nn_idx]
         else:

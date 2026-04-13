@@ -1,18 +1,3 @@
-"""
-agent_d3qn.py — OBELIX submission agent (Dueling D3QN + GRU)
-
-Submit this file (renamed to agent.py) + weights.pth to Codabench.
-
-Architecture (Dueling Double DQN with GRU):
-  Linear(77→128) → ReLU → GRU(128→128) →
-      Value stream:     Linear(128→1)
-      Advantage stream: Linear(128→5)
-  Q(s,a) = V(s) + A(s,a) - mean(A)
-
-Input: 4-frame stack (18×4=72) + previous action one-hot (5) = 77
-Policy: greedy (argmax Q-values).
-"""
-
 import os
 from collections import deque
 
@@ -26,27 +11,23 @@ OBS_DIM = 18
 ACTION_DIM = 5
 HIDDEN_DIM = 128
 STACK_SIZE = 4
-INPUT_DIM = OBS_DIM * STACK_SIZE + ACTION_DIM      
+INPUT_DIM = OBS_DIM * STACK_SIZE + ACTION_DIM
 
 
-class DuelingDRQN(nn.Module):
+class RecurrentActorCritic(nn.Module):
     def __init__(self, input_dim=INPUT_DIM, hidden_dim=HIDDEN_DIM, action_dim=ACTION_DIM):
         super().__init__()
         self.fc = nn.Linear(input_dim, hidden_dim)
-        self.gru = nn.GRU(hidden_dim, hidden_dim, batch_first=True)
-        self.val_stream = nn.Linear(hidden_dim, 1)
-        self.adv_stream = nn.Linear(hidden_dim, action_dim)
+        self.lstm = nn.LSTM(hidden_dim, hidden_dim, batch_first=True)
+        self.actor = nn.Linear(hidden_dim, action_dim)
+        self.critic = nn.Linear(hidden_dim, 1)
 
     def forward(self, x, hidden=None):
         x = F.relu(self.fc(x))
-        x, hidden = self.gru(x, hidden)
-        val = self.val_stream(x)
-        adv = self.adv_stream(x)
-        q = val + adv - adv.mean(dim=-1, keepdim=True)
-        return q, hidden
+        x, hidden = self.lstm(x, hidden)
+        return self.actor(x), self.critic(x), hidden
 
 
-                                                                      
 _MODEL = None
 _HIDDEN = None
 _LAST_RNG_ID = None
@@ -59,10 +40,10 @@ def _load_once():
     if _MODEL is not None:
         return
     wpath = os.path.join(os.path.dirname(os.path.abspath(__file__)), "weights.pth")
-    model = DuelingDRQN()
+    model = RecurrentActorCritic()
     sd = torch.load(wpath, map_location="cpu")
-    if "online" in sd:
-        model.load_state_dict(sd["online"])
+    if "actor_critic" in sd:
+        model.load_state_dict(sd["actor_critic"])
     else:
         model.load_state_dict(sd)
     model.eval()
@@ -95,8 +76,8 @@ def policy(obs: np.ndarray, rng: np.random.Generator) -> str:
 
     x = torch.as_tensor(augmented, dtype=torch.float32).view(1, 1, INPUT_DIM)
     with torch.no_grad():
-        q, _HIDDEN = _MODEL(x, _HIDDEN)
-        action_idx = int(q[:, -1, :].argmax(dim=1).item())
+        logits, _, _HIDDEN = _MODEL(x, _HIDDEN)
+        action_idx = int(logits[:, -1, :].argmax(dim=1).item())
 
     _PREV_ACTION = np.zeros(ACTION_DIM, dtype=np.float32)
     _PREV_ACTION[action_idx] = 1.0

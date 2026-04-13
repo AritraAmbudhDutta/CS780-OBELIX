@@ -28,7 +28,7 @@ from obelix import OBELIX
 
 ACTIONS = ["L45", "L22", "FW", "R22", "R45"]
 OBS_DIM, ACTION_DIM, STACK_SIZE = 18, 5, 4
-INPUT_DIM = OBS_DIM * STACK_SIZE + ACTION_DIM  # 77
+INPUT_DIM = OBS_DIM * STACK_SIZE + ACTION_DIM      
 
 
 class QNet(nn.Module):
@@ -67,33 +67,33 @@ def build_stacked(frame_stack):
     return np.concatenate(frames[-STACK_SIZE:], axis=0).astype(np.float32)
 
 
-# ── Heuristic exploration (used during training for search phase) ──
+                                                                     
 def heuristic_action(obs, fw_count, turn_dir):
     """Biased forward walk when no sensors active during training."""
-    if obs[17] == 1:  # Stuck
+    if obs[17] == 1:         
         return (random.choice([0, 4]), 0, -turn_dir)
 
     segment = 15
     if fw_count < segment:
-        return (2, fw_count + 1, turn_dir)  # FW
+        return (2, fw_count + 1, turn_dir)      
     elif fw_count < segment + 2:
-        idx = 4 if turn_dir > 0 else 0  # R45 / L45
+        idx = 4 if turn_dir > 0 else 0             
         return (idx, fw_count + 1, turn_dir)
     else:
-        return (2, 0, -turn_dir)  # FW, reset segment
+        return (2, 0, -turn_dir)                     
 
 
 def shape_reward(obs, prev_obs, action_idx, env_reward, action_hist):
     """MINIMAL shaping — only penalize bad patterns, don't add fake positives."""
     shaped = env_reward
 
-    # Anti-circling: penalize turn-only sequences
+                                                 
     if len(action_hist) >= 6:
         recent = list(action_hist)[-6:]
-        if all(a != 2 for a in recent):  # 6 turns in a row, no forward
+        if all(a != 2 for a in recent):                                
             shaped -= 3.0
 
-    # Anti-stuck reinforcement (env already gives -200, add a bit more)
+                                                                       
     if obs[17] == 1:
         shaped -= 10.0
 
@@ -110,7 +110,7 @@ def train(args):
     optimizer = optim.Adam(online.parameters(), lr=args.lr)
     buffer = ReplayBuffer(args.buffer)
 
-    # Environment — ALWAYS walls=True
+                                     
     env = OBELIX(scaling_factor=5, arena_size=500, max_steps=args.max_steps,
                  wall_obstacles=True, difficulty=0)
 
@@ -127,7 +127,7 @@ def train(args):
     print(f"{'='*70}")
 
     for ep in range(1, args.episodes + 1):
-        # Random difficulty each episode
+                                        
         diff = random.choice([0, 0, 2, 2, 3, 3, 3])
         env.difficulty = diff
         env.box_blink_enabled = diff >= 2
@@ -143,7 +143,7 @@ def train(args):
         ep_raw = 0.0
         fw_count, turn_dir = 0, 1
 
-        # Epsilon schedule
+                          
         eps = args.eps_end + (args.eps_start - args.eps_end) * math.exp(-total_steps / args.eps_decay)
 
         while not done:
@@ -151,19 +151,19 @@ def train(args):
             aug = np.concatenate([stacked, prev_action])
             sensor_sum = float(np.sum(obs[:17]))
 
-            # ── Action selection ──
+                                    
             if sensor_sum == 0:
-                # Heuristic search when no sensors (most of the time early on)
+                                                                              
                 if random.random() < 0.15:
-                    # Occasionally use NN even during search (helps learn)
+                                                                          
                     action_idx = random.randrange(ACTION_DIM)
                 else:
                     action_idx, fw_count, turn_dir = heuristic_action(obs, fw_count, turn_dir)
             elif random.random() < eps:
-                # Epsilon-greedy for exploration near box
+                                                         
                 action_idx = random.randrange(ACTION_DIM)
             else:
-                # Greedy Q action
+                                 
                 x = torch.as_tensor(aug, dtype=torch.float32, device=device).unsqueeze(0)
                 with torch.no_grad():
                     q = online(x)
@@ -175,7 +175,7 @@ def train(args):
 
             shaped = shape_reward(next_obs, obs, action_idx, env_reward, action_hist)
 
-            # Build next augmented obs
+                                      
             frame_stack_n = deque(frame_stack, maxlen=STACK_SIZE)
             frame_stack_n.append(next_obs)
             stacked_n = build_stacked(frame_stack_n)
@@ -185,7 +185,7 @@ def train(args):
 
             buffer.push(aug, action_idx, shaped, aug_n, done)
 
-            # ── Learn ──
+                         
             if len(buffer) >= args.batch:
                 s_b, a_b, r_b, ns_b, d_b = buffer.sample(args.batch)
                 S = torch.as_tensor(s_b, dtype=torch.float32, device=device)
@@ -196,7 +196,7 @@ def train(args):
 
                 q_sa = online(S).gather(1, A.unsqueeze(1)).squeeze(1)
                 with torch.no_grad():
-                    # Double DQN: select with online, evaluate with target
+                                                                          
                     next_act = online(NS).argmax(dim=1, keepdim=True)
                     next_q = target(NS).gather(1, next_act).squeeze(1)
                     tgt = R + args.gamma * next_q * (1 - D)

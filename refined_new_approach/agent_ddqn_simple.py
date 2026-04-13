@@ -18,9 +18,9 @@ _LOAD_ERR    = None
 ACTIONS = ("L45", "L22", "FW", "R22", "R45")
 
 
-# ===========================================================================
-# Inline DualStream network (no external imports required)
-# ===========================================================================
+                                                                             
+                                                          
+                                                                             
 
 class _InlineNet:
     """Factory that produces a DualStreamQNet compatible with single-obs training."""
@@ -55,9 +55,9 @@ class _InlineNet:
         return _Net()
 
 
-# ===========================================================================
-# Fallback policy
-# ===========================================================================
+                                                                             
+                 
+                                                                             
 
 def _safe_fallback(obs: np.ndarray, rng: np.random.Generator) -> str:
     """Biased random walk used when weights cannot be loaded."""
@@ -69,9 +69,9 @@ def _safe_fallback(obs: np.ndarray, rng: np.random.Generator) -> str:
     return ACTIONS[int(rng.choice(len(ACTIONS), p=probs))]
 
 
-# ===========================================================================
-# One-time loader
-# ===========================================================================
+                                                                             
+                 
+                                                                             
 
 def _load_once() -> None:
     global _NET, _TH, _LOAD_ERR
@@ -96,9 +96,9 @@ def _load_once() -> None:
         _LOAD_ERR = str(exc)
 
 
-# ===========================================================================
-# Public API
-# ===========================================================================
+                                                                             
+            
+                                                                             
 
 def policy(obs, rng=None) -> str:
     """

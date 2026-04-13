@@ -62,7 +62,7 @@ Final Test Phase & 366 \\
 
 \section{Introduction and Problem Description}
 
-The OBELIX project draws inspiration from the seminal 1991 work by Mahadevan and Connell \cite{mahadevan1992automatic}, which demonstrated one of the earliest applications of reinforcement learning on a physical robot for box-pushing tasks. Our task is to design an RL-based autonomous controller for a simulated mobile robot named OBELIX that must locate a grey box in an arena, attach to it, and push it to the arena boundary (success).
+The OBELIX project draws inspiration from the seminal 1991 work by Mahadevan and Connell \cite{mahadevan1992automatic}, which demonstrated one of the earliest applications of reinforcement learning on a physical robot for box-pushing tasks. The task is to design an RL-based autonomous controller for a simulated mobile robot named OBELIX that must locate a grey box in an arena, attach to it, and push it to the arena boundary (success).
 
 The environment presents a \textbf{Partially Observable Markov Decision Process (POMDP)} with the following characteristics:
 
@@ -104,7 +104,7 @@ Based on the analysis, I developed four structured approaches:
 
 \textbf{Approach 2 -- Dueling D3QN + GRU + PER} \cite{wang2016dueling, van2016deep, schaul2015prioritized}: 128-unit GRU with Prioritized Experience Replay (PER) ($\alpha\!=\!0.6$, $\beta$: 0.4$\to$1.0 via SumTree) and 3-step returns. Same input/curriculum as Approach 1. Best single-episode score in Phase 3 ($-1515$) but inconsistent.
 
-\textbf{Approach 3 -- Discrete SAC} \cite{haarnoja2018soft}: Entropy-regularized $J(\pi) = \mathbb{E}[Q(s,a) - \alpha \log \pi(a|s)]$ with twin GRU-based Q-networks and auto-tuned temperature ($\alpha$), to encourage exploration and reduce premature collapse to circling policies. In our Phase 3 runs, it did not converge within the available training budget.
+\textbf{Approach 3 -- Discrete SAC} \cite{haarnoja2018soft}: Entropy-regularized $J(\pi) = \mathbb{E}[Q(s,a) - \alpha \log \pi(a|s)]$ with twin GRU-based Q-networks and auto-tuned temperature ($\alpha$), to encourage exploration and reduce premature collapse to circling policies. In my Phase 3 runs, it did not converge within the available training budget.
 
 \textbf{Approach 4 -- Hybrid Heuristic + DQN}: Mode-switch hybrid controller with hand-crafted search/stuck-escape heuristics and a small DQN (77$\to$64$\to$64$\to$5) for sensor-active approach/push decisions (with heuristic--NN blending). Practical for reducing random wandering, but still brittle with wall obstacles.
 
@@ -204,7 +204,7 @@ For the \textbf{no-curriculum approaches} (Approaches 5 and 6), this weighted mu
 \subsection{Local Evaluation}
 
 
-To reduce overfitting to specific seeds, local evaluation was performed with multiple random seeds per difficulty level, following the Codabench evaluation protocol. We used our custom \texttt{rank\_checkpoints\_codabench.py} script to automate checkpoint scoring and comparison.
+To reduce overfitting to specific seeds, local evaluation was performed with multiple random seeds per difficulty level, following the Codabench evaluation protocol. I used the custom \texttt{rank\_checkpoints\_codabench.py} script to automate checkpoint scoring and comparison.
 
 \section{Results}
 
@@ -335,7 +335,7 @@ The biggest unsolved problem is \textit{search}: when all 18 sensor bits are zer
 
     \item \textbf{Richer observations}: The current 18-bit binary observation is very limited---either a sensor fires or it does not. Continuous sensors (e.g., distance and angle to the box) would give the agent a gradient signal even when the box is far away. Adding positional history would also help the agent remember where it has already been, so it avoids revisiting the same spots.
 
-    \item \textbf{Domain randomization} \cite{tobin2017domain}: Training with randomized arena configurations (different spawn locations, wall layouts, box speeds) could make the policy more robust across different seeds and difficulty levels, reducing the high variance we observed in evaluation.
+    \item \textbf{Domain randomization} \cite{tobin2017domain}: Training with randomized arena configurations (different spawn locations, wall layouts, box speeds) could make the policy more robust across different seeds and difficulty levels, reducing the high variance observed in evaluation.
 \end{itemize}
 
 \section{Conclusion}
@@ -353,8 +353,8 @@ The main takeaway: in this POMDP, the bottleneck is search, not exploitation. Cu
 
 \section*{Project Links}
 \begin{itemize}[nosep]
-    \item \textbf{YouTube Demo:} \url{PASTE_YOUTUBE_DEMO_LINK_HERE}
-    \item \textbf{GitHub Repository:} \url{PASTE_GITHUB_REPO_LINK_HERE}
+    \item \textbf{YouTube Demo:} \url{https://youtu.be/TcjzRQEaw-c?si=G2j2z2qWrfpcn9a-}
+    \item \textbf{GitHub Repository:} \url{https://github.com/AritraAmbudhDutta/CS780-OBELIX}
 \end{itemize}
 
 
@@ -370,9 +370,9 @@ Github Copilot was used in a limited advisory capacity.
 Part & Used LLM? (Yes/No) & Purpose of Using LLM \\
 \midrule
 Understanding concepts & Yes & Clarifying PBRS theory, DRQN architecture details \\
-Ideation / brainstorming & Yes & Generating list of possible approaches \\
+Ideation / brainstorming & Yes & Generating list of possible approaches when stuck\\
 Debugging small code snippets & No &   \\
-Plotting / visualization code & No &   \\
+Plotting / visualization code & Yes & Used LLM help to write the complex plot codes  \\
 Grammar / writing style & No & \\
 Report structure / section ideas & Yes & ideas about how to organize content into required sections \\
 Other (specify) & No &   \\

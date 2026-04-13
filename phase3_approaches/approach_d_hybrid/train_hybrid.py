@@ -35,7 +35,7 @@ INPUT_DIM = OBS_DIM * STACK_SIZE + ACTION_DIM
 HIDDEN_DIM = 64
 
 
-# ═══════════════ Model ═══════════════
+                                       
 class SimpleQNet(nn.Module):
     def __init__(self, input_dim=INPUT_DIM, hidden_dim=HIDDEN_DIM, action_dim=ACTION_DIM):
         super().__init__()
@@ -49,7 +49,7 @@ class SimpleQNet(nn.Module):
         return self.fc3(x)
 
 
-# ═══════════════ Replay Buffer ═══════════════
+                                               
 class ReplayBuffer:
     def __init__(self, capacity):
         self.buf = deque(maxlen=capacity)
@@ -68,7 +68,7 @@ class ReplayBuffer:
         return len(self.buf)
 
 
-# ═══════════════ Helpers ═══════════════
+                                         
 def build_stacked(frame_stack):
     frames = list(frame_stack)
     if len(frames) < STACK_SIZE:
@@ -83,7 +83,7 @@ def curriculum_reset(env, progress):
     box_x, box_y = env.box_center_x, env.box_center_y
     margin = env.bot_radius + 15
     if progress < 0.15:
-        dist = random.randint(15, 35)    # Very close
+        dist = random.randint(15, 35)                
     elif progress < 0.30:
         dist = random.randint(30, 80)
     elif progress < 0.40:
@@ -130,9 +130,9 @@ def heuristic_search(obs, step, rng, fw_count, turn_dir):
 
     segment = 12 + (step // 150) * 4
     if fw_count < segment:
-        return (2, fw_count + 1, turn_dir)  # FW
+        return (2, fw_count + 1, turn_dir)      
     else:
-        return (4 if turn_dir > 0 else 0, 0, -turn_dir)  # R45 or L45
+        return (4 if turn_dir > 0 else 0, 0, -turn_dir)              
 
 
 def get_difficulty(progress):
@@ -148,7 +148,7 @@ def get_difficulty(progress):
         return random.choice([0, 2, 3, 3, 3]), random.random() < 0.5
 
 
-# ═══════════════ Training Loop ═══════════════
+                                               
 def train(args):
     device = torch.device("cuda" if args.device != "cpu" and torch.cuda.is_available() else "cpu")
     print(f"Device: {device}")
@@ -206,16 +206,16 @@ def train(args):
             sensor_sum = float(np.sum(obs[:17]))
 
             if sensor_sum == 0:
-                # Heuristic search
+                                  
                 action_idx, fw_count, turn_dir = heuristic_search(obs, total_steps, None, fw_count, turn_dir)
-                # Small chance of using NN even during search (for learning)
+                                                                            
                 if random.random() < 0.1 and len(buffer) > args.batch:
                     x = torch.as_tensor(aug, dtype=torch.float32, device=device).unsqueeze(0)
                     with torch.no_grad():
                         q = online(x)
                         action_idx = int(q.argmax(dim=1).item())
             else:
-                # NN-guided with epsilon-greedy
+                                               
                 eps = args.eps_end + (args.eps_start - args.eps_end) * math.exp(-total_steps / args.eps_decay)
                 if random.random() < eps:
                     action_idx = random.randrange(ACTION_DIM)
@@ -237,10 +237,10 @@ def train(args):
             pa_new[action_idx] = 1.0
             aug_n = np.concatenate([stacked_n, pa_new])
 
-            # Store ALL transitions (both heuristic and NN)
+                                                           
             buffer.push(aug, action_idx, shaped, aug_n, done)
 
-            # Learn
+                   
             if len(buffer) >= args.batch:
                 s_b, a_b, r_b, ns_b, d_b = buffer.sample(args.batch)
                 S = torch.as_tensor(s_b, dtype=torch.float32, device=device)

@@ -24,9 +24,9 @@ import torch.nn.functional as F
 from qnet import DualStreamQNet
 
 
-# ---------------------------------------------------------------------------
-# Temporal Observation Stacker
-# ---------------------------------------------------------------------------
+                                                                             
+                              
+                                                                             
 
 class FrameBuffer:
     """
@@ -82,9 +82,9 @@ class FrameBuffer:
         return np.concatenate(list(self._queue), axis=0)
 
 
-# ---------------------------------------------------------------------------
-# Transition data container
-# ---------------------------------------------------------------------------
+                                                                             
+                           
+                                                                             
 
 @dataclass
 class Experience:
@@ -96,9 +96,9 @@ class Experience:
     terminal: bool
 
 
-# ---------------------------------------------------------------------------
-# Prioritized Experience Replay Buffer
-# ---------------------------------------------------------------------------
+                                                                             
+                                      
+                                                                             
 
 class PERBuffer:
     """
@@ -169,9 +169,9 @@ class PERBuffer:
             self._priorities[int(idx)] = float(max(p, 1e-6))
 
 
-# ---------------------------------------------------------------------------
-# Dueling Double DQN Agent  (D3QN + PER + n-step + forward-biased exploration)
-# ---------------------------------------------------------------------------
+                                                                             
+                                                                              
+                                                                             
 
 class DuelDQNAgent:
     """
@@ -186,9 +186,9 @@ class DuelDQNAgent:
     IS-weight exponent β anneals from β_start → 1.0 over beta_horizon steps.
     """
 
-    # Biased random exploration: heavily prefer forward action
+                                                              
     FWD_BIAS_PROBS  = np.array([0.05, 0.15, 0.60, 0.15, 0.05], dtype=np.float64)
-    # When stuck (obs[-1]==1): only turn, never go forward
+                                                          
     TURN_ONLY_PROBS = np.array([0.25, 0.25, 0.00, 0.25, 0.25], dtype=np.float64)
 
     def __init__(
@@ -204,12 +204,12 @@ class DuelDQNAgent:
         eps_low: float = 0.05,
         eps_horizon: int = 200_000,
         target_sync_every: int = 2000,
-        # PER config
+                    
         per_alpha: float = 0.6,
         beta_start: float = 0.4,
         beta_horizon: int = 200_000,
         per_min_priority: float = 1e-5,
-        # n-step config
+                       
         n_step: int = 3,
         device: Optional[str] = None,
     ) -> None:
@@ -226,17 +226,17 @@ class DuelDQNAgent:
 
         self.target_sync_every = int(max(1, target_sync_every))
 
-        # PER annealing
+                       
         self.beta_start   = float(beta_start)
         self.beta_horizon = int(max(1, beta_horizon))
         self.per_min_p    = float(per_min_priority)
 
-        # n-step buffer
+                       
         self.n_step = int(max(1, n_step))
-        self._nstep_queue: Deque[Tuple[np.ndarray, int, float, np.ndarray, bool]] = \
+        self._nstep_queue: Deque[Tuple[np.ndarray, int, float, np.ndarray, bool]] =\
             deque(maxlen=self.n_step)
 
-        # Device selection
+                          
         if device is not None:
             chosen = device
         elif torch.cuda.is_available():
@@ -247,7 +247,7 @@ class DuelDQNAgent:
             chosen = "cpu"
         self.device = torch.device(chosen)
 
-        # Networks
+                  
         self.online_net = DualStreamQNet(
             sensor_dim=self.obs_dim,
             num_actions=self.num_actions,
@@ -265,12 +265,12 @@ class DuelDQNAgent:
         self.opt    = torch.optim.Adam(self.online_net.parameters(), lr=learning_rate)
         self.replay = PERBuffer(max_size=buffer_size, priority_exponent=per_alpha)
 
-        self.total_steps  = 0   # env steps (drives ε schedule)
-        self.update_steps = 0   # gradient steps (drives β schedule + target sync)
+        self.total_steps  = 0                                  
+        self.update_steps = 0                                                     
 
-    # ------------------------------------------------------------------
-    # Schedules
-    # ------------------------------------------------------------------
+                                                                        
+               
+                                                                        
 
     def _current_epsilon(self) -> float:
         frac = min(1.0, self.total_steps / float(self.eps_horizon))
@@ -280,9 +280,9 @@ class DuelDQNAgent:
         frac = min(1.0, self.update_steps / float(self.beta_horizon))
         return self.beta_start + frac * (1.0 - self.beta_start)
 
-    # ------------------------------------------------------------------
-    # Action selection
-    # ------------------------------------------------------------------
+                                                                        
+                      
+                                                                        
 
     def choose_action(
         self,
@@ -313,9 +313,9 @@ class DuelDQNAgent:
         with torch.no_grad():
             return int(self.online_net(t).argmax(dim=1).item())
 
-    # ------------------------------------------------------------------
-    # n-step accumulation helpers
-    # ------------------------------------------------------------------
+                                                                        
+                                 
+                                                                        
 
     def _build_multistep_transition(self) -> Optional[Experience]:
         """Convert the n-step queue into a single discounted Experience."""
@@ -350,9 +350,9 @@ class DuelDQNAgent:
                 self.replay.store(exp)
             self._nstep_queue.popleft()
 
-    # ------------------------------------------------------------------
-    # Environment step handler
-    # ------------------------------------------------------------------
+                                                                        
+                              
+                                                                        
 
     def record_and_learn(
         self,
@@ -391,9 +391,9 @@ class DuelDQNAgent:
 
         return None
 
-    # ------------------------------------------------------------------
-    # Gradient update (Double DQN + PER + Huber loss)
-    # ------------------------------------------------------------------
+                                                                        
+                                                     
+                                                                        
 
     def update_weights(self) -> Optional[float]:
         """One gradient step using a priority-sampled mini-batch."""
@@ -401,7 +401,7 @@ class DuelDQNAgent:
             return None
 
         beta = self._current_beta()
-        obs_b, act_b, rew_b, nobs_b, done_b, idx_b, w_b = \
+        obs_b, act_b, rew_b, nobs_b, done_b, idx_b, w_b =\
             self.replay.draw(self.minibatch, importance_weight_exponent=beta)
 
         s  = torch.from_numpy(obs_b).to(self.device)
@@ -411,17 +411,17 @@ class DuelDQNAgent:
         d  = torch.from_numpy(done_b).to(self.device)
         w  = torch.from_numpy(w_b).to(self.device)
 
-        # Current Q-values
+                          
         q_pred = self.online_net(s).gather(1, a.unsqueeze(1)).squeeze(1)
 
-        # Double DQN: online_net picks next action, frozen_net evaluates it
+                                                                           
         disc_n = self.discount ** self.n_step
         with torch.no_grad():
             best_next_a = self.online_net(s2).argmax(dim=1, keepdim=True)
             q_next      = self.frozen_net(s2).gather(1, best_next_a).squeeze(1)
             td_target   = r + (1.0 - d) * disc_n * q_next
 
-        # Weighted Huber (smooth L1) loss
+                                         
         td_errors   = td_target - q_pred
         elem_loss   = F.smooth_l1_loss(q_pred, td_target, reduction="none")
         total_loss  = (w * elem_loss).mean()
@@ -431,7 +431,7 @@ class DuelDQNAgent:
         nn.utils.clip_grad_norm_(self.online_net.parameters(), max_norm=10.0)
         self.opt.step()
 
-        # Refresh priorities with |δ| + min_priority
+                                                    
         refreshed_p = td_errors.detach().abs().cpu().numpy() + self.per_min_p
         self.replay.refresh_priorities(idx_b, refreshed_p)
 
@@ -441,9 +441,9 @@ class DuelDQNAgent:
 
         return float(total_loss.item())
 
-    # ------------------------------------------------------------------
-    # Utilities
-    # ------------------------------------------------------------------
+                                                                        
+               
+                                                                        
 
     def sync_target(self) -> None:
         """Copy online network weights into the frozen target network."""
@@ -480,7 +480,7 @@ class DuelDQNAgent:
             self.total_steps  = int(ckpt.get("total_steps",    self.total_steps))
             self.update_steps = int(ckpt.get("update_steps",   self.update_steps))
         else:
-            # Raw state-dict fallback
+                                     
             self.online_net.load_state_dict(ckpt)
             self.frozen_net.load_state_dict(self.online_net.state_dict())
 

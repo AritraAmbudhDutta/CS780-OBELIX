@@ -32,7 +32,7 @@ INPUT_DIM = OBS_DIM * STACK_SIZE + ACTION_DIM
 HIDDEN_DIM = 128
 
 
-# ═══════════════ Networks ═══════════════
+                                          
 class SACPolicyNet(nn.Module):
     def __init__(self, input_dim=INPUT_DIM, hidden_dim=HIDDEN_DIM, action_dim=ACTION_DIM):
         super().__init__()
@@ -68,7 +68,7 @@ class SACQNet(nn.Module):
         return self.out(x), hidden
 
 
-# ═══════════════ Replay Buffer ═══════════════
+                                               
 class SeqReplayBuffer:
     def __init__(self, capacity):
         self.buf = deque(maxlen=capacity)
@@ -87,7 +87,7 @@ class SeqReplayBuffer:
         return len(self.buf)
 
 
-# ═══════════════ Common Helpers ═══════════════
+                                                
 def build_stacked(frame_stack):
     frames = list(frame_stack)
     if len(frames) < STACK_SIZE:
@@ -159,7 +159,7 @@ def get_difficulty(progress):
         return random.choice([0, 2, 3, 3, 3]), random.random() < 0.5
 
 
-# ═══════════════ Training Loop ═══════════════
+                                               
 def train(args):
     device = torch.device("cuda" if args.device != "cpu" and torch.cuda.is_available() else "cpu")
     print(f"Device: {device}")
@@ -178,7 +178,7 @@ def train(args):
     q1_opt = optim.Adam(q1.parameters(), lr=args.lr)
     q2_opt = optim.Adam(q2.parameters(), lr=args.lr)
 
-    # Auto-tuned temperature
+                            
     target_entropy = -0.5 * math.log(ACTION_DIM)
     log_alpha = torch.zeros(1, requires_grad=True, device=device)
     alpha_opt = optim.Adam([log_alpha], lr=args.lr)
@@ -254,7 +254,7 @@ def train(args):
             action_hist.append(action_idx)
             ep_raw += env_reward
 
-        # ── SAC Update ──
+                          
         if len(buffer) >= args.batch:
             for _ in range(min(4, max(1, len(buffer) // 1000))):
                 s_b, a_b, r_b, ns_b, d_b = buffer.sample(args.batch)
@@ -266,7 +266,7 @@ def train(args):
 
                 alpha = log_alpha.exp().detach()
 
-                # Q-value targets
+                                 
                 with torch.no_grad():
                     next_logits, _ = policy_net(NS)
                     next_logits_2d = next_logits[:, -1, :]
@@ -281,7 +281,7 @@ def train(args):
                     next_v = (next_probs * (next_q - alpha * next_log_probs)).sum(dim=-1)
                     target = R + args.gamma * next_v * (1 - D)
 
-                # Q-network updates
+                                   
                 q1_all, _ = q1(S)
                 q2_all, _ = q2(S)
                 q1_sa = q1_all[:, -1, :].gather(1, A.unsqueeze(1)).squeeze(1)
@@ -298,7 +298,7 @@ def train(args):
                 q2_loss.backward()
                 q2_opt.step()
 
-                # Policy update
+                               
                 curr_logits, _ = policy_net(S)
                 curr_logits_2d = curr_logits[:, -1, :]
                 probs = F.softmax(curr_logits_2d, dim=-1)
@@ -315,9 +315,9 @@ def train(args):
                 policy_loss.backward()
                 policy_opt.step()
 
-                # Temperature update
+                                    
                 alpha_loss = -(log_alpha * (log_probs.detach() + target_entropy).mean()).mean()
-                # Simplify: use entropy of current policy
+                                                         
                 entropy = -(probs * log_probs).sum(dim=-1).mean()
                 alpha_loss = -(log_alpha.exp() * (entropy.detach() - target_entropy))
 
@@ -325,13 +325,13 @@ def train(args):
                 alpha_loss.backward()
                 alpha_opt.step()
 
-                # Soft target update
+                                    
                 for tp, p in zip(q1_target.parameters(), q1.parameters()):
                     tp.data.copy_(args.tau * p.data + (1 - args.tau) * tp.data)
                 for tp, p in zip(q2_target.parameters(), q2.parameters()):
                     tp.data.copy_(args.tau * p.data + (1 - args.tau) * tp.data)
 
-        # ── Logging ──
+                       
         all_rewards.append(ep_raw)
         avg50 = float(np.mean(all_rewards[-50:]))
         if avg50 > best_avg:

@@ -122,7 +122,7 @@ def policy(obs: np.ndarray, rng: np.random.Generator) -> str:
     _STEP += 1
     sensor_sum = float(np.sum(obs[:17]))
 
-    # Stuck escape
+                  
     if obs[17] == 1:
         _STUCK_ESCAPE = 4
         _FW_COUNT = 0
@@ -132,11 +132,11 @@ def policy(obs: np.ndarray, rng: np.random.Generator) -> str:
         _set_prev(act)
         return act
 
-    # No sensors → heuristic search + reset hidden state
+                                                        
     if sensor_sum == 0:
         _ZERO_RUN += 1
         if _ZERO_RUN >= 5:
-            _HIDDEN = None  # Reset GRU hidden state
+            _HIDDEN = None                          
         if _ZERO_RUN >= 2:
             act = _heuristic_search()
             _set_prev(act)
@@ -144,7 +144,7 @@ def policy(obs: np.ndarray, rng: np.random.Generator) -> str:
     else:
         _ZERO_RUN = 0
 
-    # Sensors active → use GRU network with heuristic backup
+                                                            
     _FRAME_STACK.append(obs.astype(np.float32))
     stacked = _build_stacked(_FRAME_STACK)
     aug = np.concatenate([stacked, _PREV_ACTION])

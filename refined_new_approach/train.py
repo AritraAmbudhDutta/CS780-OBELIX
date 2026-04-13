@@ -29,9 +29,9 @@ from obelix import OBELIX
 ACTION_SET = ["L45", "L22", "FW", "R22", "R45"]
 
 
-# ===========================================================================
-# Geometric helpers for reward shaping
-# ===========================================================================
+                                                                             
+                                      
+                                                                             
 
 def bot_to_box_dist(env: OBELIX) -> float:
     """Euclidean distance between robot centre and box centre."""
@@ -69,21 +69,21 @@ def heading_alignment(env: OBELIX) -> float:
     dy = env.box_center_y - env.bot_center_y
     dist = math.sqrt(dx * dx + dy * dy)
     if dist < 1e-6:
-        return 1.0  # robot is already on top of box
+        return 1.0                                  
 
-    # Robot's unit facing vector
+                                
     theta = math.radians(env.facing_angle)
     fx, fy = math.cos(theta), math.sin(theta)
 
-    # Unit vector from robot to box
+                                   
     tx, ty = dx / dist, dy / dist
 
-    return fx * tx + fy * ty  # dot product of two unit vectors = cos(angle)
+    return fx * tx + fy * ty                                                
 
 
-# ===========================================================================
-# Multi-component PBRS reward shaping
-# ===========================================================================
+                                                                             
+                                     
+                                                                             
 
 def apply_pbrs_shaping(
     env: OBELIX,
@@ -120,16 +120,16 @@ def apply_pbrs_shaping(
     """
     shaped = base_reward
 
-    # --- Component A: approach ---
+                                   
     phi_a_prev = -d_bot_box_prev / arena_diagonal
     phi_a_curr = -d_bot_box_curr / arena_diagonal
     shaped += scale * (gamma * phi_a_curr - phi_a_prev)
 
     if not env.enable_push:
-        # --- Component B: face the box (pre-attachment) ---
+                                                            
         shaped += (scale * 0.5) * (gamma * align_curr - align_prev)
     else:
-        # --- Component C: push toward boundary (post-attachment) ---
+                                                                     
         phi_c_prev = -d_box_wall_prev / arena_diagonal
         phi_c_curr = -d_box_wall_curr / arena_diagonal
         shaped += (scale * 2.0) * (gamma * phi_c_curr - phi_c_prev)
@@ -137,9 +137,9 @@ def apply_pbrs_shaping(
     return shaped
 
 
-# ===========================================================================
-# Curriculum scheduler
-# ===========================================================================
+                                                                             
+                      
+                                                                             
 
 def schedule_curriculum(current_episode: int) -> dict:
     """
@@ -161,9 +161,9 @@ def schedule_curriculum(current_episode: int) -> dict:
         return {"use_walls": True,  "diff_pool": [0, 2, 3]}
 
 
-# ===========================================================================
-# Evaluation helper (mirrors Codabench evaluation protocol)
-# ===========================================================================
+                                                                             
+                                                           
+                                                                             
 
 def run_evaluation(
     agent: DuelDQNAgent,
@@ -223,30 +223,30 @@ def run_evaluation(
     }
 
 
-# ===========================================================================
-# Training loop
-# ===========================================================================
+                                                                             
+               
+                                                                             
 
 def run_training() -> None:
     p = argparse.ArgumentParser(description="Train OBELIX agent with Dueling Double DQN")
 
-    # --- Training duration ---
+                               
     p.add_argument("--episodes",      type=int,   default=8000)
     p.add_argument("--seed",          type=int,   default=0)
     p.add_argument("--resume",        action="store_true",
                    help="Continue from existing checkpoint")
 
-    # --- Environment ---
+                         
     p.add_argument("--scaling_factor", type=int,  default=5)
     p.add_argument("--arena_size",     type=int,  default=500)
     p.add_argument("--max_steps",      type=int,  default=2000)
     p.add_argument("--box_speed",      type=int,  default=2)
 
-    # --- Network architecture ---
+                                  
     p.add_argument("--h1", type=int, default=256, help="First hidden layer size")
     p.add_argument("--h2", type=int, default=128, help="Second hidden layer size")
 
-    # --- Optimisation ---
+                          
     p.add_argument("--lr",                type=float, default=1e-4)
     p.add_argument("--gamma",             type=float, default=0.99)
     p.add_argument("--buffer_size",       type=int,   default=50_000)
@@ -256,24 +256,24 @@ def run_training() -> None:
     p.add_argument("--eps_decay_steps",   type=int,   default=200_000)
     p.add_argument("--target_update",     type=int,   default=2000)
 
-    # --- PER ---
+                 
     p.add_argument("--per_alpha",         type=float, default=0.6)
     p.add_argument("--per_beta_init",     type=float, default=0.4)
     p.add_argument("--per_beta_steps",    type=int,   default=200_000)
     p.add_argument("--per_min_priority",  type=float, default=1e-5)
 
-    # --- n-step returns ---
+                            
     p.add_argument("--n_step",            type=int,   default=3)
 
-    # --- Observation stacking ---
+                                  
     p.add_argument("--n_stack",           type=int,   default=6,
                    help="Number of frames to stack (1 = no stacking)")
 
-    # --- Reward shaping ---
+                            
     p.add_argument("--shaping_scale",     type=float, default=10.0,
                    help="Multiplier applied to all PBRS shaping components")
 
-    # --- Saving / evaluation ---
+                                 
     p.add_argument("--out_dir",           type=str,   default=".")
     p.add_argument("--ckpt_name",         type=str,   default="obelix_agent.pth")
     p.add_argument("--save_interval",     type=int,   default=50)
@@ -283,13 +283,13 @@ def run_training() -> None:
 
     cfg = p.parse_args()
 
-    # ---- Setup ----
+                     
     os.makedirs(cfg.out_dir, exist_ok=True)
     ckpt_path  = os.path.join(cfg.out_dir, cfg.ckpt_name)
     best_path  = os.path.join(cfg.out_dir, f"best_{cfg.ckpt_name}")
 
     master_rng = np.random.default_rng(cfg.seed)
-    stacked_dim = cfg.n_stack * 18   # e.g. 6 × 18 = 108
+    stacked_dim = cfg.n_stack * 18                      
 
     agent = DuelDQNAgent(
         obs_dim=stacked_dim,
@@ -314,7 +314,7 @@ def run_training() -> None:
         agent.load_checkpoint(ckpt_path)
         print(f"Resumed training from: {ckpt_path}")
 
-    arena_diag = math.sqrt(2) * cfg.arena_size  # max possible distance
+    arena_diag = math.sqrt(2) * cfg.arena_size                         
     top_mean   = -float("inf")
 
     print("=" * 72)
@@ -335,7 +335,7 @@ def run_training() -> None:
     print("=" * 72)
 
     for ep in range(1, cfg.episodes + 1):
-        # ---- Curriculum ----
+                              
         sched      = schedule_curriculum(ep)
         diff_pool  = sched["diff_pool"]
         use_walls  = sched["use_walls"]
@@ -357,8 +357,8 @@ def run_training() -> None:
         obs       = frame_buf.reset(raw_obs)
 
         done          = False
-        ep_env_ret    = 0.0    # unmodified env reward  (the Codabench metric)
-        ep_shaped_ret = 0.0    # shaped reward           (training signal)
+        ep_env_ret    = 0.0                                                   
+        ep_shaped_ret = 0.0                                               
         ep_steps      = 0
         losses        = []
         detected_box  = False
@@ -368,7 +368,7 @@ def run_training() -> None:
 
         render_this = cfg.render_interval > 0 and (ep % cfg.render_interval == 0)
 
-        # Cache shaping state at episode start
+                                              
         prev_d_bb    = bot_to_box_dist(env)
         prev_d_bwall = box_wall_distance(env)
         prev_align   = heading_alignment(env)
@@ -381,7 +381,7 @@ def run_training() -> None:
             raw_next, env_rew, done = env.step(act, render=render_this)
             next_obs = frame_buf.advance(raw_next)
 
-            # Milestone tracking
+                                
             if env.enable_push and not detected_box:
                 detected_box = True
                 detect_step  = ep_steps + 1
@@ -389,7 +389,7 @@ def run_training() -> None:
                     env.box_center_x, env.box_center_y):
                 pushed_wall = True
 
-            # Compute PBRS shaping
+                                  
             curr_d_bb    = bot_to_box_dist(env)
             curr_d_bwall = box_wall_distance(env)
             curr_align   = heading_alignment(env)
@@ -411,7 +411,7 @@ def run_training() -> None:
             prev_d_bwall = curr_d_bwall
             prev_align   = curr_align
 
-            # Learn
+                   
             loss_val = agent.record_and_learn(obs, act_idx, shaped_rew, next_obs, done)
             if loss_val is not None:
                 losses.append(loss_val)
@@ -421,7 +421,7 @@ def run_training() -> None:
             ep_shaped_ret += shaped_rew
             ep_steps      += 1
 
-        # ---- Logging ----
+                           
         avg_loss = float(np.mean(losses)) if losses else float("nan")
         flags = ""
         if detected_box:
@@ -444,7 +444,7 @@ def run_training() -> None:
             f"steps={ep_steps:4d} ε={agent.epsilon:.4f} loss={avg_loss:.5f}{flags}"
         )
 
-        # ---- Append to JSONL log ----
+                                       
         record = {
             "episode":        ep,
             "phase":          phase,
@@ -463,12 +463,12 @@ def run_training() -> None:
         with open(os.path.join(cfg.out_dir, "train_log.jsonl"), "a") as fh:
             fh.write(json.dumps(record) + "\n")
 
-        # ---- Periodic checkpoint ----
+                                       
         if ep % cfg.save_interval == 0:
             agent.save_checkpoint(ckpt_path)
             print(f"  → Saved checkpoint: {ckpt_path}")
 
-        # ---- Periodic evaluation ----
+                                       
         if cfg.eval_interval > 0 and ep % cfg.eval_interval == 0:
             eval_stats = run_evaluation(
                 agent    = agent,
@@ -477,9 +477,9 @@ def run_training() -> None:
                 scale    = cfg.scaling_factor,
                 arena_sz = cfg.arena_size,
                 step_limit = cfg.max_steps,
-                walls    = True,                   # always evaluate with walls
+                walls    = True,                                               
                 box_spd  = cfg.box_speed,
-                diff_list= [0, 2, 3],              # all difficulties (Codabench)
+                diff_list= [0, 2, 3],                                            
                 stack_k  = cfg.n_stack,
             )
             print(
@@ -502,7 +502,7 @@ def run_training() -> None:
                     "eval_max":  eval_stats["max"],
                 }) + "\n")
 
-    # ---- Final save ----
+                          
     agent.save_checkpoint(ckpt_path)
     print(f"\n{'=' * 72}")
     print(f"Training complete.  Final checkpoint → {ckpt_path}")
@@ -510,7 +510,7 @@ def run_training() -> None:
         print(f"Best checkpoint   → {best_path}  (mean={top_mean:.1f})")
     print(f"{'=' * 72}")
 
-    # Copy best weights to weights.pth for Codabench submission
+                                                               
     if os.path.exists(best_path):
         import shutil
         submission_weights = os.path.join(cfg.out_dir, "weights.pth")

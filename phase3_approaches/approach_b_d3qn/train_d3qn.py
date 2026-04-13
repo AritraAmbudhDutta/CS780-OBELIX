@@ -33,7 +33,7 @@ INPUT_DIM = OBS_DIM * STACK_SIZE + ACTION_DIM
 HIDDEN_DIM = 128
 
 
-# ═══════════════ Model ═══════════════
+                                       
 class DuelingDRQN(nn.Module):
     def __init__(self, input_dim=INPUT_DIM, hidden_dim=HIDDEN_DIM, action_dim=ACTION_DIM):
         super().__init__()
@@ -51,7 +51,7 @@ class DuelingDRQN(nn.Module):
         return q, hidden
 
 
-# ═══════════════ Sum Tree for PER ═══════════════
+                                                  
 class SumTree:
     def __init__(self, capacity):
         self.capacity = capacity
@@ -148,7 +148,7 @@ class PERBuffer:
         return self.tree.n_entries
 
 
-# ═══════════════ Common Helpers ═══════════════
+                                                
 def build_stacked(frame_stack):
     frames = list(frame_stack)
     if len(frames) < STACK_SIZE:
@@ -227,7 +227,7 @@ def get_difficulty(progress):
         return random.choice([0, 2, 3, 3, 3]), random.random() < 0.5
 
 
-# ═══════════════ D3QN Agent ═══════════════
+                                            
 class D3QNAgent:
     def __init__(self, lr, gamma, seq_len, batch_size, buffer_cap,
                  eps_start, eps_end, eps_decay, target_update, n_step, device):
@@ -315,7 +315,7 @@ class D3QNAgent:
         self.optimizer.step()
 
 
-# ═══════════════ Training Loop ═══════════════
+                                               
 def train(args):
     device = torch.device("cuda" if args.device != "cpu" and torch.cuda.is_available() else "cpu")
     print(f"Device: {device}")

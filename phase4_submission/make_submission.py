@@ -36,7 +36,7 @@ def main():
         return
 
     with zipfile.ZipFile(output, 'w', zipfile.ZIP_DEFLATED) as zf:
-        zf.write(agent_src, "agent.py")  # Rename to agent.py
+        zf.write(agent_src, "agent.py")                      
         zf.write(weights_src, "weights.pth")
 
     size_mb = os.path.getsize(output) / (1024 * 1024)

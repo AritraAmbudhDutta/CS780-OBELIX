@@ -1,18 +1,3 @@
-"""
-agent_d3qn.py — OBELIX submission agent (Dueling D3QN + GRU)
-
-Submit this file (renamed to agent.py) + weights.pth to Codabench.
-
-Architecture (Dueling Double DQN with GRU):
-  Linear(77→128) → ReLU → GRU(128→128) →
-      Value stream:     Linear(128→1)
-      Advantage stream: Linear(128→5)
-  Q(s,a) = V(s) + A(s,a) - mean(A)
-
-Input: 4-frame stack (18×4=72) + previous action one-hot (5) = 77
-Policy: greedy (argmax Q-values).
-"""
-
 import os
 from collections import deque
 
@@ -26,7 +11,7 @@ OBS_DIM = 18
 ACTION_DIM = 5
 HIDDEN_DIM = 128
 STACK_SIZE = 4
-INPUT_DIM = OBS_DIM * STACK_SIZE + ACTION_DIM  # 77
+INPUT_DIM = OBS_DIM * STACK_SIZE + ACTION_DIM      
 
 
 class DuelingDRQN(nn.Module):
@@ -46,7 +31,7 @@ class DuelingDRQN(nn.Module):
         return q, hidden
 
 
-# ── Global inference state ──────────────────────────────────────────
+                                                                      
 _MODEL = None
 _HIDDEN = None
 _LAST_RNG_ID = None
